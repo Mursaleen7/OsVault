@@ -325,6 +325,36 @@ def _chunks(lst: list, n: int):
 # Main
 # ---------------------------------------------------------------------------
 
+def link_osv_cve_ids(sb: Client, osv_records: list[dict]) -> None:
+    """
+    After OSV upsert, back-fill cve_id on OSV rows only when that cve_id
+    is not already taken by an NVD row — avoids unique constraint conflicts.
+    """
+    # Build set of cve_ids already owned by NVD rows
+    nvd_cve_ids = set()
+    try:
+        resp = sb.table("vulnerabilities").select("cve_id").eq("source", "nvd").execute()
+        nvd_cve_ids = {r["cve_id"] for r in resp.data if r.get("cve_id")}
+    except Exception as e:
+        log.warning("Could not fetch NVD cve_ids for linking: %s", e)
+        return
+
+    updated = 0
+    for r in osv_records:
+        cve_id = r.get("cve_id")
+        osv_id = r.get("osv_id")
+        if not cve_id or not osv_id or cve_id in nvd_cve_ids:
+            continue
+        try:
+            sb.table("vulnerabilities").update({"cve_id": cve_id}).eq("osv_id", osv_id).execute()
+            nvd_cve_ids.add(cve_id)  # mark as taken so dupes in OSV batch are skipped
+            updated += 1
+        except Exception as e:
+            log.warning("Could not link cve_id %s to osv_id %s: %s", cve_id, osv_id, e)
+
+    log.info("Linked cve_id on %d OSV records.", updated)
+
+
 def main():
     now = datetime.now(timezone.utc)
     since = now - timedelta(days=LOOKBACK_DAYS)
@@ -350,6 +380,9 @@ def main():
             r for item in raw_osv if (r := parse_osv_item(item, eco))
         )
     upsert_osv_records(sb, osv_records)
+
+    # Back-fill cve_id on OSV rows where the CVE isn't already owned by an NVD row
+    link_osv_cve_ids(sb, osv_records)
 
     log.info(
         "Done. NVD=%d OSV=%d records ingested.",
