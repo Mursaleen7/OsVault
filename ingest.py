@@ -291,10 +291,6 @@ def upsert_osv_records(sb: Client, records: list[dict]) -> None:
         return
     log.info("Upserting %d OSV records into vulnerabilities...", len(records))
 
-    # Split: records that have a cve_id (may already exist from NVD) vs osv-only
-    has_cve = [r for r in records if r.get("cve_id")]
-    no_cve  = [r for r in records if not r.get("cve_id")]
-
     def _row(r):
         return {
             "osv_id":            r["osv_id"],
@@ -310,21 +306,13 @@ def upsert_osv_records(sb: Client, records: list[dict]) -> None:
             "source":            "osv",
         }
 
-    # For records with a cve_id, upsert on cve_id (merges with NVD rows)
-    if has_cve:
-        rows = [_row(r) for r in has_cve]
-        # Deduplicate by cve_id — keep last occurrence
-        deduped = {r["cve_id"]: r for r in rows}.values()
-        for chunk in _chunks(list(deduped), 500):
-            sb.table("vulnerabilities").upsert(chunk, on_conflict="cve_id").execute()
+    rows = [_row(r) for r in records]
 
-    # For OSV-only records (no cve_id), upsert on osv_id
-    if no_cve:
-        rows = [_row(r) for r in no_cve]
-        # Deduplicate by osv_id
-        deduped = {r["osv_id"]: r for r in rows}.values()
-        for chunk in _chunks(list(deduped), 500):
-            sb.table("vulnerabilities").upsert(chunk, on_conflict="osv_id").execute()
+    # Deduplicate by osv_id (primary conflict target for all OSV records)
+    deduped = list({r["osv_id"]: r for r in rows}.values())
+
+    for chunk in _chunks(deduped, 500):
+        sb.table("vulnerabilities").upsert(chunk, on_conflict="osv_id").execute()
 
     log.info("OSV upsert complete.")
 
