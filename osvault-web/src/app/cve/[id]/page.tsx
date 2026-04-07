@@ -1,5 +1,6 @@
 import { supabase } from "@/lib/supabase";
 import { notFound } from "next/navigation";
+import { AFFILIATES } from "@/lib/affiliates";
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -29,6 +30,23 @@ export default async function CVEPage({ params }: { params: Promise<{ id: string
       <p><strong>Published:</strong> {data.published_at}</p>
       <p><strong>Description:</strong> {data.description}</p>
       <pre>{JSON.stringify(data, null, 2)}</pre>
+
+      {(data.cvss_severity === "CRITICAL" || data.cvss_severity === "HIGH") && (
+        <div style={{ marginTop: 24, borderTop: "1px solid #e5e7eb", paddingTop: 16 }}>
+          <div style={{ padding: "12px 16px", background: "#fef2f2", border: "1px solid #fecaca", borderRadius: 6, fontSize: 13, marginBottom: 10 }}>
+            {AFFILIATES.snyk.cta_critical(1)}{" "}
+            <a href={AFFILIATES.snyk.href} target="_blank" rel="noopener noreferrer sponsored" style={{ fontWeight: 600 }}>
+              Try {AFFILIATES.snyk.name} →
+            </a>
+          </div>
+          <div style={{ padding: "12px 16px", background: "#f9fafb", border: "1px solid #e5e7eb", borderRadius: 6, fontSize: 13 }}>
+            {AFFILIATES.socket.cta_general}{" "}
+            <a href={AFFILIATES.socket.href} target="_blank" rel="noopener noreferrer sponsored" style={{ fontWeight: 600 }}>
+              Try {AFFILIATES.socket.name} →
+            </a>
+          </div>
+        </div>
+      )}
     </main>
   );
 }

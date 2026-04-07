@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { CheckResult } from "../api/check/route";
+import { AFFILIATES } from "@/lib/affiliates";
 
 // ---------------------------------------------------------------------------
 // Parsers
@@ -176,9 +177,53 @@ export default function CheckerPage() {
               </tbody>
             </table>
           )}
+
+          {/* Contextual affiliate CTAs */}
+          <div style={{ marginTop: 32, borderTop: "1px solid #e5e7eb", paddingTop: 20 }}>
+            {result.critical_count > 0 && (
+              <AffiliateCTA
+                text={AFFILIATES.snyk.cta_critical(result.critical_count)}
+                href={AFFILIATES.snyk.href}
+                name={AFFILIATES.snyk.name}
+                highlight
+              />
+            )}
+            {result.vulnerable_count > 0 && (
+              <AffiliateCTA
+                text={AFFILIATES.socket.cta_critical(result.vulnerable_count)}
+                href={AFFILIATES.socket.href}
+                name={AFFILIATES.socket.name}
+              />
+            )}
+            <AffiliateCTA
+              text={AFFILIATES.sonarqube.cta_general}
+              href={AFFILIATES.sonarqube.href}
+              name={AFFILIATES.sonarqube.name}
+            />
+          </div>
         </div>
       )}
     </main>
+  );
+}
+
+function AffiliateCTA({ text, href, name, highlight }: {
+  text: string; href: string; name: string; highlight?: boolean;
+}) {
+  return (
+    <div style={{
+      margin: "12px 0",
+      padding: "12px 16px",
+      background: highlight ? "#fef2f2" : "#f9fafb",
+      border: `1px solid ${highlight ? "#fecaca" : "#e5e7eb"}`,
+      borderRadius: 6,
+      fontSize: 13,
+    }}>
+      {text}{" "}
+      <a href={href} target="_blank" rel="noopener noreferrer sponsored" style={{ fontWeight: 600 }}>
+        Try {name} →
+      </a>
+    </div>
   );
 }
 
