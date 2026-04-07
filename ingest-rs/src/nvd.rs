@@ -22,6 +22,8 @@ pub async fn fetch_nvd_cves(
 
         let mut req = client
             .get(NVD_BASE)
+            .header("Accept", "application/json")
+            .header("User-Agent", "osvault-ingest/0.1 (github.com/Mursaleen7/OsVault)")
             .query(&[
                 ("pubStartDate",    start.format(fmt).to_string()),
                 ("pubEndDate",      end.format(fmt).to_string()),
@@ -35,7 +37,9 @@ pub async fn fetch_nvd_cves(
 
         let resp = req.send().await?;
         if !resp.status().is_success() {
-            warn!("NVD returned {}", resp.status());
+            let status = resp.status();
+            let body = resp.text().await.unwrap_or_default();
+            warn!("NVD returned {} — body: {}", status, &body[..body.len().min(300)]);
             break;
         }
 
