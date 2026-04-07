@@ -294,7 +294,6 @@ def upsert_osv_records(sb: Client, records: list[dict]) -> None:
     def _row(r):
         return {
             "osv_id":            r["osv_id"],
-            "cve_id":            None,  # NVD owns cve_id; avoid unique constraint conflicts
             "ghsa_id":           r["osv_id"] if r["osv_id"].startswith("GHSA-") else None,
             "ecosystem":         r["ecosystem"],
             "summary":           r["summary"],
