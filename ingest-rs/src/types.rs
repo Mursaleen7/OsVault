@@ -135,6 +135,7 @@ pub struct KevResponse {
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct KevEntry {
+    #[serde(rename = "cveID")]
     pub cve_id: String,
 }
 
