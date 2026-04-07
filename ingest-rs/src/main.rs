@@ -109,8 +109,12 @@ async fn main() -> Result<()> {
     supabase::upsert(&client, &supabase_url, &supabase_key, "vulnerabilities", &osv_rows, "osv_id").await?;
     info!("OSV upsert complete.");
 
-    // Back-fill cve_id on OSV rows
-    supabase::link_osv_cve_ids(&client, &supabase_url, &supabase_key, &osv_cve_links).await?;
+    // Back-fill cve_id on OSV rows — skip if too many records to avoid timeout
+    if osv_cve_links.len() < 500 {
+        supabase::link_osv_cve_ids(&client, &supabase_url, &supabase_key, &osv_cve_links).await?;
+    } else {
+        info!("Skipping cve_id back-fill ({} records — too many for single run)", osv_cve_links.len());
+    }
 
     info!(
         "Done. NVD={} OSV={} records ingested.",

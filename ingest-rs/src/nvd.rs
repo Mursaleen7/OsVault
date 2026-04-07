@@ -13,7 +13,7 @@ pub async fn fetch_nvd_cves(
     start: &DateTime<Utc>,
     end: &DateTime<Utc>,
 ) -> Result<Vec<NvdVulnWrapper>> {
-    let fmt = "%Y-%m-%dT%H:%M:%S.000";
+    let fmt = "%Y-%m-%dT%H:%M:%S%.3f+00:00";
     let mut start_index: u64 = 0;
     let mut all: Vec<NvdVulnWrapper> = Vec::new();
 
