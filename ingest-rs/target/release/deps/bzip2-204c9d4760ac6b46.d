@@ -1,0 +1,11 @@
+/Users/mursaleensakoskar/Desktop/OsVault/ingest-rs/target/release/deps/bzip2-204c9d4760ac6b46.d: /Users/mursaleensakoskar/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/bzip2-0.5.2/src/lib.rs /Users/mursaleensakoskar/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/bzip2-0.5.2/src/mem.rs /Users/mursaleensakoskar/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/bzip2-0.5.2/src/bufread.rs /Users/mursaleensakoskar/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/bzip2-0.5.2/src/read.rs /Users/mursaleensakoskar/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/bzip2-0.5.2/src/write.rs
+
+/Users/mursaleensakoskar/Desktop/OsVault/ingest-rs/target/release/deps/libbzip2-204c9d4760ac6b46.rlib: /Users/mursaleensakoskar/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/bzip2-0.5.2/src/lib.rs /Users/mursaleensakoskar/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/bzip2-0.5.2/src/mem.rs /Users/mursaleensakoskar/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/bzip2-0.5.2/src/bufread.rs /Users/mursaleensakoskar/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/bzip2-0.5.2/src/read.rs /Users/mursaleensakoskar/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/bzip2-0.5.2/src/write.rs
+
+/Users/mursaleensakoskar/Desktop/OsVault/ingest-rs/target/release/deps/libbzip2-204c9d4760ac6b46.rmeta: /Users/mursaleensakoskar/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/bzip2-0.5.2/src/lib.rs /Users/mursaleensakoskar/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/bzip2-0.5.2/src/mem.rs /Users/mursaleensakoskar/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/bzip2-0.5.2/src/bufread.rs /Users/mursaleensakoskar/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/bzip2-0.5.2/src/read.rs /Users/mursaleensakoskar/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/bzip2-0.5.2/src/write.rs
+
+/Users/mursaleensakoskar/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/bzip2-0.5.2/src/lib.rs:
+/Users/mursaleensakoskar/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/bzip2-0.5.2/src/mem.rs:
+/Users/mursaleensakoskar/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/bzip2-0.5.2/src/bufread.rs:
+/Users/mursaleensakoskar/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/bzip2-0.5.2/src/read.rs:
+/Users/mursaleensakoskar/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/bzip2-0.5.2/src/write.rs:

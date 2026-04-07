@@ -15,24 +15,29 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Rust build
+        uses: actions/cache@v4
         with:
-          python-version: "3.11"
-          cache: "pip"
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            ingest-rs/target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('ingest-rs/Cargo.lock') }}
+          restore-keys: ${{ runner.os }}-cargo-
 
-      - name: Install dependencies
-        run: pip install -r requirements.txt
+      - name: Build ingestion binary
+        run: cargo build --release --manifest-path ingest-rs/Cargo.toml
 
-      - name: Run ingestion script
+      - name: Run ingestion
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
           NVD_API_KEY:  ${{ secrets.NVD_API_KEY }}
-        run: python ingest.py
+        run: ./ingest-rs/target/release/ingest
 
       - name: Notify on failure
         if: failure()
-        run: |
-          echo "Ingestion failed at $(date -u). Check the logs above."
-          exit 1
+        run: echo "Ingestion failed at $(date -u). Check the logs above." && exit 1
