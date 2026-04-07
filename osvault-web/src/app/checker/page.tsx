@@ -3,6 +3,7 @@
 import { useState } from "react";
 import type { CheckResult } from "../api/check/route";
 import { AFFILIATES } from "@/lib/affiliates";
+import { generatePdf } from "@/lib/generatePdf";
 
 // ---------------------------------------------------------------------------
 // Parsers
@@ -70,10 +71,16 @@ export default function CheckerPage() {
   const [loading, setLoading] = useState(false);
   const [result, setResult]   = useState<CheckResult | null>(null);
   const [error, setError]     = useState<string | null>(null);
+  const [email, setEmail]     = useState("");
+  const [pdfLoading, setPdfLoading] = useState(false);
+  const [emailError, setEmailError] = useState<string | null>(null);
+  const [unlocked, setUnlocked]     = useState(false);
 
   async function handleCheck() {
     setError(null);
     setResult(null);
+    setUnlocked(false);
+    setEmail("");
 
     const packages = detectAndParse(input);
     if (!packages || packages.length === 0) {
@@ -98,6 +105,33 @@ export default function CheckerPage() {
       setError("Network error. Please try again.");
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function handleDownload() {
+    setEmailError(null);
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      setEmailError("Please enter a valid email address.");
+      return;
+    }
+    setPdfLoading(true);
+    try {
+      const res = await fetch("/api/report", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, result }),
+      });
+      if (!res.ok) {
+        setEmailError("Something went wrong. Please try again.");
+        return;
+      }
+      setUnlocked(true);
+      await generatePdf(result!, email);
+    } catch {
+      setEmailError("Failed to generate report. Please try again.");
+    } finally {
+      setPdfLoading(false);
     }
   }
 
@@ -129,7 +163,7 @@ export default function CheckerPage() {
 
       {result && (
         <div style={{ marginTop: 24 }}>
-          {/* Summary */}
+          {/* Summary — always visible */}
           <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 16 }}>
             <GradeBadge grade={result.grade} />
             <div>
@@ -145,7 +179,8 @@ export default function CheckerPage() {
 
           {result.vulns.length === 0 ? (
             <p style={{ color: "#16a34a" }}>✓ No known vulnerabilities found.</p>
-          ) : (
+          ) : unlocked ? (
+            /* Full table — unlocked after email */
             <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
               <thead>
                 <tr style={{ borderBottom: "2px solid #e5e7eb", textAlign: "left" }}>
@@ -176,6 +211,39 @@ export default function CheckerPage() {
                 ))}
               </tbody>
             </table>
+          ) : (
+            /* Email gate */
+            <div style={{ border: "1px solid #e5e7eb", borderRadius: 8, padding: 24, marginTop: 8, background: "#f9fafb" }}>
+              <p style={{ margin: "0 0 4px", fontWeight: 600 }}>
+                {result.critical_count > 0
+                  ? `⚠️ ${result.critical_count} critical and ${result.high_count} high severity vulnerabilities found.`
+                  : `${result.vulnerable_count} vulnerabilit${result.vulnerable_count === 1 ? "y" : "ies"} found across your dependencies.`}
+              </p>
+              <p style={{ margin: "0 0 16px", fontSize: 13, color: "#6b7280" }}>
+                Enter your email to get the full breakdown with exact package versions and upgrade paths as a PDF report.
+              </p>
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                <input
+                  type="email"
+                  placeholder="you@company.com"
+                  value={email}
+                  onChange={e => setEmail(e.target.value)}
+                  onKeyDown={e => e.key === "Enter" && handleDownload()}
+                  style={{ flex: 1, minWidth: 220, padding: "8px 12px", fontSize: 13, border: "1px solid #d1d5db", borderRadius: 4 }}
+                />
+                <button
+                  onClick={handleDownload}
+                  disabled={pdfLoading}
+                  style={{ padding: "8px 20px", background: "#111827", color: "#fff", border: "none", borderRadius: 4, cursor: "pointer", fontSize: 13 }}
+                >
+                  {pdfLoading ? "Generating..." : "Download Full Report (PDF)"}
+                </button>
+              </div>
+              {emailError && <p style={{ color: "#dc2626", fontSize: 12, marginTop: 8 }}>{emailError}</p>}
+              <p style={{ fontSize: 11, color: "#9ca3af", marginTop: 8 }}>
+                No spam. We&apos;ll only send security updates relevant to your stack.
+              </p>
+            </div>
           )}
 
           {/* Contextual affiliate CTAs */}
