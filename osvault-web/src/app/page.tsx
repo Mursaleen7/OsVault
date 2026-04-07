@@ -78,10 +78,7 @@ export default async function Home() {
         </div>
         <div style={{ display: "grid", gap: 12 }}>
           {recent.map((v) => (
-            <a key={v.cve_id} href={`/cve/${v.cve_id}`} style={{ display: "block", padding: "16px 20px", borderRadius: "var(--radius)", border: "1px solid var(--border)", background: "var(--bg-card)", color: "var(--text)", transition: "border-color 0.15s, background 0.15s" }}
-              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = "var(--border-2)"; (e.currentTarget as HTMLElement).style.background = "var(--bg-hover)"; }}
-              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = "var(--border)"; (e.currentTarget as HTMLElement).style.background = "var(--bg-card)"; }}
-            >
+            <a key={v.cve_id} href={`/cve/${v.cve_id}`} className="cve-card" style={{ display: "block", padding: "16px 20px", borderRadius: "var(--radius)", border: "1px solid var(--border)", background: "var(--bg-card)", color: "var(--text)" }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 16 }}>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
