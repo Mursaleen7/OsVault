@@ -6,100 +6,106 @@ export async function generateMetadata({ params }: { params: Promise<{ package: 
   const { package: pkg } = await params;
   const name = decodeURIComponent(pkg);
   return {
-    title: `${name} Security Vulnerabilities | OsVault`,
-    description: `Known CVEs and security vulnerabilities affecting the ${name} npm package. CVSS scores, risk ratings, and affected versions.`,
+    title: `${name} Security Vulnerabilities`,
+    description: `Known CVEs and security advisories affecting the ${name} npm package. CVSS scores, risk ratings, and affected versions.`,
     alternates: { canonical: `${BASE_URL}/npm/${pkg}` },
-    openGraph: {
-      title: `${name} npm Package Vulnerabilities`,
-      description: `Security vulnerability report for ${name}`,
-      url: `${BASE_URL}/npm/${pkg}`,
-      siteName: "OsVault",
-    },
   };
 }
+
+const SEV_COLOR: Record<string, string> = {
+  CRITICAL: "#ef4444", HIGH: "#f97316", MEDIUM: "#eab308", LOW: "#22c55e",
+};
 
 export default async function NpmPackagePage({ params }: { params: Promise<{ package: string }> }) {
   const { package: raw } = await params;
   const packageName = decodeURIComponent(raw);
 
   const { data: byPackages } = await supabase
-    .from("vulnerabilities")
-    .select("*")
-    .eq("source", "osv")
-    .eq("ecosystem", "npm")
+    .from("vulnerabilities").select("*").eq("source", "osv").eq("ecosystem", "npm")
     .contains("affected_packages", JSON.stringify([{ name: packageName }]));
 
   const { data: bySummary } = await supabase
-    .from("vulnerabilities")
-    .select("*")
-    .eq("source", "osv")
-    .eq("ecosystem", "npm")
+    .from("vulnerabilities").select("*").eq("source", "osv").eq("ecosystem", "npm")
     .ilike("summary", `%${packageName}%`);
 
   const combined = [...(byPackages ?? []), ...(bySummary ?? [])];
   const seen = new Set<number>();
-  const vulns = combined.filter((v) => {
-    if (seen.has(v.id)) return false;
-    seen.add(v.id);
-    return true;
-  });
-
-  const jsonLd = {
-    "@context": "https://schema.org",
-    "@type": "WebPage",
-    "name": `${packageName} npm Security Vulnerabilities`,
-    "description": `${vulns.length} known vulnerabilities affecting ${packageName}`,
-    "url": `${BASE_URL}/npm/${raw}`,
-  };
-
-  if (vulns.length === 0) {
-    return (
-      <main style={{ maxWidth: 760, margin: "0 auto", padding: "2rem 1rem", fontFamily: "monospace" }}>
-        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
-        <a href="/" style={{ fontSize: 13, color: "#6b7280", textDecoration: "none" }}>← OsVault</a>
-        <h1 style={{ margin: "8px 0 16px" }}>{packageName}</h1>
-        <p style={{ color: "#16a34a" }}>✓ No known vulnerabilities found for this package.</p>
-        <p style={{ fontSize: 13, color: "#6b7280", marginTop: 16 }}>
-          <a href="/checker">Check your full dependency tree →</a>
-        </p>
-      </main>
-    );
-  }
+  const vulns = combined.filter((v) => { if (seen.has(v.id)) return false; seen.add(v.id); return true; });
+  const sorted = vulns.sort((a, b) => (b.cvss_score ?? 0) - (a.cvss_score ?? 0));
 
   const criticalCount = vulns.filter(v => v.cvss_severity === "CRITICAL").length;
   const highCount     = vulns.filter(v => v.cvss_severity === "HIGH").length;
 
   return (
-    <main style={{ maxWidth: 760, margin: "0 auto", padding: "2rem 1rem", fontFamily: "monospace" }}>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+    <main style={{ maxWidth: 860, margin: "0 auto", padding: "40px 24px 80px" }}>
+      {/* Breadcrumb */}
+      <div style={{ fontSize: 13, color: "var(--text-3)", marginBottom: 24, display: "flex", alignItems: "center", gap: 8 }}>
+        <a href="/" style={{ color: "var(--text-3)" }}>OsVault</a>
+        <span>/</span><span>npm</span><span>/</span>
+        <span style={{ color: "var(--text-2)" }}>{packageName}</span>
+      </div>
 
-      <a href="/" style={{ fontSize: 13, color: "#6b7280", textDecoration: "none" }}>← OsVault</a>
-      <h1 style={{ margin: "8px 0 4px" }}>{packageName}</h1>
-      <p style={{ fontSize: 14, color: "#6b7280", marginBottom: 24 }}>
-        {vulns.length} known vulnerabilit{vulns.length === 1 ? "y" : "ies"}
-        {criticalCount > 0 && <span style={{ color: "#dc2626", fontWeight: 600 }}> · {criticalCount} critical</span>}
-        {highCount > 0 && <span style={{ color: "#ea580c", fontWeight: 600 }}> · {highCount} high</span>}
-      </p>
+      {/* Header */}
+      <div style={{ marginBottom: 32 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
+          <span style={{ padding: "3px 10px", borderRadius: 6, fontSize: 12, fontWeight: 700, background: "#f9731612", color: "#f97316", border: "1px solid #f9731630" }}>npm</span>
+          {criticalCount > 0 && <span style={{ padding: "3px 10px", borderRadius: 6, fontSize: 12, fontWeight: 700, background: "#ef444412", color: "#ef4444", border: "1px solid #ef444430" }}>{criticalCount} critical</span>}
+        </div>
+        <h1 style={{ fontSize: "clamp(24px, 4vw, 36px)", fontWeight: 800, letterSpacing: "-0.03em", marginBottom: 8 }}>{packageName}</h1>
+        <p style={{ fontSize: 15, color: "var(--text-2)" }}>
+          {vulns.length === 0
+            ? "No known vulnerabilities found."
+            : `${vulns.length} known vulnerabilit${vulns.length === 1 ? "y" : "ies"} · ${criticalCount} critical · ${highCount} high`}
+        </p>
+      </div>
 
-      {vulns.map((v) => (
-        <article key={v.id} style={{ borderTop: "1px solid #e5e7eb", paddingTop: 16, marginTop: 16 }}>
-          <h2 style={{ fontSize: 15, margin: "0 0 6px" }}>
-            {v.cve_id
-              ? <a href={`/cve/${v.cve_id}`}>{v.cve_id}</a>
-              : v.osv_id ?? v.id}
-          </h2>
-          <p style={{ fontSize: 13, color: "#374151", margin: "0 0 8px" }}>{v.summary ?? "No summary available."}</p>
-          <div style={{ display: "flex", gap: 16, fontSize: 12, color: "#6b7280", flexWrap: "wrap" }}>
-            {v.cvss_severity && <span>Severity: <strong style={{ color: v.cvss_severity === "CRITICAL" ? "#dc2626" : v.cvss_severity === "HIGH" ? "#ea580c" : "#374151" }}>{v.cvss_severity}</strong></span>}
-            {v.cvss_score && <span>CVSS: {v.cvss_score}</span>}
-            {v.combined_risk_score && <span>Risk: {v.combined_risk_score}/100</span>}
-            {v.published_at && <span>Published: {new Date(v.published_at).toLocaleDateString()}</span>}
-          </div>
-        </article>
-      ))}
+      {vulns.length === 0 ? (
+        <div style={{ padding: 32, borderRadius: "var(--radius)", border: "1px solid #22c55e30", background: "#22c55e08", textAlign: "center" }}>
+          <div style={{ fontSize: 32, marginBottom: 12 }}>✓</div>
+          <p style={{ color: "#22c55e", fontWeight: 600, marginBottom: 8 }}>No known vulnerabilities</p>
+          <p style={{ fontSize: 13, color: "var(--text-3)" }}>This package has no recorded CVEs in our database.</p>
+          <a href="/checker" style={{ display: "inline-block", marginTop: 16, padding: "8px 20px", borderRadius: "var(--radius-sm)", background: "var(--accent)", color: "#fff", fontSize: 13, fontWeight: 600 }}>
+            Check your full dependency tree →
+          </a>
+        </div>
+      ) : (
+        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          {sorted.map((v) => (
+            <div key={v.id} style={{ padding: "20px 24px", borderRadius: "var(--radius)", border: "1px solid var(--border)", background: "var(--bg-card)" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 16, marginBottom: 10 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+                  <span style={{ fontWeight: 700, fontSize: 14 }}>
+                    {v.cve_id
+                      ? <a href={`/cve/${v.cve_id}`} style={{ color: "var(--accent-2)" }}>{v.cve_id}</a>
+                      : <span style={{ color: "var(--text-2)" }}>{v.osv_id}</span>}
+                  </span>
+                  {v.cvss_severity && (
+                    <span style={{ fontSize: 11, fontWeight: 700, padding: "2px 8px", borderRadius: 4, background: `${SEV_COLOR[v.cvss_severity] ?? "#374151"}18`, color: SEV_COLOR[v.cvss_severity] ?? "var(--text-2)", border: `1px solid ${SEV_COLOR[v.cvss_severity] ?? "#374151"}30` }}>
+                      {v.cvss_severity}
+                    </span>
+                  )}
+                </div>
+                <div style={{ textAlign: "right", flexShrink: 0 }}>
+                  {v.cvss_score && <div style={{ fontSize: 22, fontWeight: 800, color: SEV_COLOR[v.cvss_severity ?? ""] ?? "var(--text)", letterSpacing: "-0.02em" }}>{v.cvss_score}</div>}
+                  {v.combined_risk_score && <div style={{ fontSize: 11, color: "var(--text-3)" }}>Risk: {v.combined_risk_score}/100</div>}
+                </div>
+              </div>
+              <p style={{ fontSize: 13, color: "var(--text-2)", lineHeight: 1.6 }}>{v.summary ?? "No summary available."}</p>
+              {v.published_at && (
+                <div style={{ marginTop: 10, fontSize: 12, color: "var(--text-3)" }}>
+                  Published {new Date(v.published_at).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
 
-      <div style={{ marginTop: 32, borderTop: "1px solid #e5e7eb", paddingTop: 16, fontSize: 13, color: "#6b7280" }}>
-        <a href="/checker">Check your full package.json for vulnerabilities →</a>
+      <div style={{ marginTop: 40, padding: "20px 24px", borderRadius: "var(--radius)", border: "1px solid var(--border)", background: "var(--bg-card)", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12 }}>
+        <span style={{ fontSize: 14, color: "var(--text-2)" }}>Check your entire dependency tree at once</span>
+        <a href="/checker" style={{ padding: "8px 20px", borderRadius: "var(--radius-sm)", background: "var(--accent)", color: "#fff", fontSize: 13, fontWeight: 600 }}>
+          Run dependency scan →
+        </a>
       </div>
     </main>
   );

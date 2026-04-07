@@ -11,51 +11,39 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
     .select("cvss_severity, description")
     .eq("cve_id", id)
     .single();
-
   const severity = data?.cvss_severity ?? "CVE";
   const desc = data?.description?.slice(0, 155) ?? `Security vulnerability details, CVSS score, and risk analysis for ${id}.`;
-
   return {
-    title: `${id} — ${severity} Severity Vulnerability | OsVault`,
+    title: `${id} — ${severity} Severity Vulnerability`,
     description: desc,
     alternates: { canonical: `${BASE_URL}/cve/${id}` },
-    openGraph: {
-      title: `${id} ${severity} Vulnerability`,
-      description: desc,
-      url: `${BASE_URL}/cve/${id}`,
-      siteName: "OsVault",
-      type: "article",
-    },
+    openGraph: { title: `${id} ${severity} Vulnerability`, description: desc, url: `${BASE_URL}/cve/${id}`, siteName: "OsVault", type: "article" },
   };
 }
 
-const SEVERITY_COLOR: Record<string, string> = {
-  CRITICAL: "#dc2626", HIGH: "#ea580c", MEDIUM: "#ca8a04", LOW: "#16a34a",
-};
-const SEVERITY_BG: Record<string, string> = {
-  CRITICAL: "#fef2f2", HIGH: "#fff7ed", MEDIUM: "#fefce8", LOW: "#f0fdf4",
+const SEV: Record<string, { color: string; bg: string; border: string }> = {
+  CRITICAL: { color: "#ef4444", bg: "#ef444412", border: "#ef444430" },
+  HIGH:     { color: "#f97316", bg: "#f9731612", border: "#f9731630" },
+  MEDIUM:   { color: "#eab308", bg: "#eab30812", border: "#eab30830" },
+  LOW:      { color: "#22c55e", bg: "#22c55e12", border: "#22c55e30" },
 };
 
-function SeverityBadge({ severity }: { severity: string | null }) {
-  if (!severity) return <span style={{ color: "#6b7280" }}>N/A</span>;
+function Badge({ label, color, bg, border }: { label: string; color: string; bg: string; border: string }) {
   return (
-    <span style={{ display: "inline-block", padding: "2px 10px", borderRadius: 4, fontSize: 13, fontWeight: 700, background: SEVERITY_BG[severity] ?? "#f3f4f6", color: SEVERITY_COLOR[severity] ?? "#374151", border: `1px solid ${SEVERITY_COLOR[severity] ?? "#d1d5db"}` }}>
-      {severity}
+    <span style={{ display: "inline-flex", alignItems: "center", padding: "3px 10px", borderRadius: 6, fontSize: 12, fontWeight: 700, color, background: bg, border: `1px solid ${border}`, letterSpacing: "0.04em" }}>
+      {label}
     </span>
   );
 }
 
-function ScoreBar({ score, max = 10, label }: { score: number | null; max?: number; label: string }) {
-  if (score == null) return <span style={{ color: "#6b7280" }}>N/A</span>;
-  const pct = Math.min((score / max) * 100, 100);
-  const color = pct >= 90 ? "#dc2626" : pct >= 70 ? "#ea580c" : pct >= 40 ? "#ca8a04" : "#16a34a";
+function ScoreCard({ label, value, sub, color }: { label: string; value: string | number | null; sub: string; color?: string }) {
   return (
-    <div>
-      <span style={{ fontWeight: 600 }}>{score}</span>
-      <div style={{ marginTop: 4, height: 6, background: "#e5e7eb", borderRadius: 3, width: 160 }}>
-        <div style={{ width: `${pct}%`, height: "100%", background: color, borderRadius: 3 }} />
+    <div style={{ padding: "20px 24px", borderRadius: "var(--radius)", border: "1px solid var(--border)", background: "var(--bg-card)", flex: 1, minWidth: 140 }}>
+      <div style={{ fontSize: 12, color: "var(--text-3)", marginBottom: 8, textTransform: "uppercase", letterSpacing: "0.06em" }}>{label}</div>
+      <div style={{ fontSize: 28, fontWeight: 800, letterSpacing: "-0.03em", color: color ?? "var(--text)" }}>
+        {value ?? "—"}
       </div>
-      <span style={{ fontSize: 11, color: "#9ca3af" }}>{label}</span>
+      <div style={{ fontSize: 12, color: "var(--text-3)", marginTop: 4 }}>{sub}</div>
     </div>
   );
 }
@@ -65,143 +53,136 @@ export default async function CVEPage({ params }: { params: Promise<{ id: string
 
   const { data, error } = await supabase
     .from("vulnerabilities")
-    .select("cve_id, description, cvss_score, cvss_vector, cvss_severity, epss_score, epss_percentile, in_kev, combined_risk_score, published_at, modified_at, cpe_list, affected_packages, ecosystem")
+    .select("*")
     .eq("cve_id", id)
     .single();
 
   if (error || !data) return notFound();
 
-  const publishedDate = data.published_at
-    ? new Date(data.published_at).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })
-    : null;
-  const modifiedDate = data.modified_at
-    ? new Date(data.modified_at).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })
-    : null;
+  const sev = SEV[data.cvss_severity ?? ""] ?? { color: "var(--text-2)", bg: "var(--bg-card)", border: "var(--border)" };
+  const publishedDate = data.published_at ? new Date(data.published_at).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" }) : null;
+  const modifiedDate  = data.modified_at  ? new Date(data.modified_at).toLocaleDateString("en-US",  { year: "numeric", month: "long", day: "numeric" }) : null;
 
   const affectedPackages: { name: string; ecosystem: string; versions?: string[] }[] =
     Array.isArray(data.affected_packages) ? data.affected_packages :
     typeof data.affected_packages === "string" ? JSON.parse(data.affected_packages) : [];
 
   const isCriticalOrHigh = data.cvss_severity === "CRITICAL" || data.cvss_severity === "HIGH";
+  const riskColor = (data.combined_risk_score ?? 0) >= 70 ? "#ef4444" : (data.combined_risk_score ?? 0) >= 40 ? "#f97316" : "#22c55e";
 
-  // JSON-LD structured data for Google
   const jsonLd = {
-    "@context": "https://schema.org",
-    "@type": "Article",
+    "@context": "https://schema.org", "@type": "Article",
     "headline": `${data.cve_id} — ${data.cvss_severity ?? "CVE"} Severity Vulnerability`,
     "description": data.description?.slice(0, 200),
-    "datePublished": data.published_at,
-    "dateModified": data.modified_at,
+    "datePublished": data.published_at, "dateModified": data.modified_at,
     "url": `${BASE_URL}/cve/${data.cve_id}`,
     "publisher": { "@type": "Organization", "name": "OsVault", "url": BASE_URL },
   };
 
   return (
-    <main style={{ maxWidth: 760, margin: "0 auto", padding: "2rem 1rem", fontFamily: "monospace" }}>
+    <main style={{ maxWidth: 860, margin: "0 auto", padding: "40px 24px 80px" }}>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
 
-      <div style={{ marginBottom: 24 }}>
-        <a href="/" style={{ fontSize: 13, color: "#6b7280", textDecoration: "none" }}>← OsVault</a>
-        <h1 style={{ margin: "8px 0 4px", fontSize: 28 }}>{data.cve_id}</h1>
-        <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-          <SeverityBadge severity={data.cvss_severity} />
-          {data.in_kev && (
-            <span style={{ display: "inline-block", padding: "2px 10px", borderRadius: 4, fontSize: 12, fontWeight: 700, background: "#450a0a", color: "#fca5a5", border: "1px solid #dc2626" }}>
-              ⚠ CISA KEV — Actively Exploited
-            </span>
-          )}
-          {publishedDate && <span style={{ fontSize: 13, color: "#6b7280" }}>Published {publishedDate}</span>}
-        </div>
+      {/* Breadcrumb */}
+      <div style={{ fontSize: 13, color: "var(--text-3)", marginBottom: 24, display: "flex", alignItems: "center", gap: 8 }}>
+        <a href="/" style={{ color: "var(--text-3)" }}>OsVault</a>
+        <span>/</span>
+        <span>CVE</span>
+        <span>/</span>
+        <span style={{ color: "var(--text-2)" }}>{data.cve_id}</span>
       </div>
 
-      <section style={{ marginBottom: 28 }}>
-        <h2 style={{ fontSize: 15, marginBottom: 8 }}>Description</h2>
-        <p style={{ lineHeight: 1.7, color: "#374151", fontSize: 14 }}>{data.description ?? "No description available."}</p>
-      </section>
+      {/* Header */}
+      <div style={{ marginBottom: 32 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12, flexWrap: "wrap" }}>
+          <Badge label={data.cvss_severity ?? "UNKNOWN"} {...sev} />
+          {data.in_kev && <Badge label="⚠ CISA KEV" color="#fca5a5" bg="#450a0a" border="#dc2626" />}
+          {publishedDate && <span style={{ fontSize: 13, color: "var(--text-3)" }}>Published {publishedDate}</span>}
+        </div>
+        <h1 style={{ fontSize: "clamp(24px, 4vw, 36px)", fontWeight: 800, letterSpacing: "-0.03em", marginBottom: 16 }}>{data.cve_id}</h1>
+        <p style={{ fontSize: 15, color: "var(--text-2)", lineHeight: 1.75, maxWidth: 720 }}>{data.description ?? "No description available."}</p>
+      </div>
 
-      <section style={{ marginBottom: 28 }}>
-        <h2 style={{ fontSize: 15, marginBottom: 12 }}>Risk Scores</h2>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: 16 }}>
-          <div style={{ padding: 16, border: "1px solid #e5e7eb", borderRadius: 8 }}>
-            <div style={{ fontSize: 12, color: "#6b7280", marginBottom: 6 }}>CVSS Score</div>
-            <ScoreBar score={data.cvss_score} max={10} label="/ 10" />
-          </div>
-          <div style={{ padding: 16, border: "1px solid #e5e7eb", borderRadius: 8 }}>
-            <div style={{ fontSize: 12, color: "#6b7280", marginBottom: 6 }}>EPSS Score</div>
-            <ScoreBar score={data.epss_score ? parseFloat((data.epss_score * 100).toFixed(1)) : null} max={100} label="% exploit probability" />
-          </div>
-          <div style={{ padding: 16, border: "1px solid #e5e7eb", borderRadius: 8 }}>
-            <div style={{ fontSize: 12, color: "#6b7280", marginBottom: 6 }}>OsVault Risk Score</div>
-            <ScoreBar score={data.combined_risk_score} max={100} label="/ 100" />
+      {/* Score cards */}
+      <div style={{ display: "flex", gap: 12, marginBottom: 32, flexWrap: "wrap" }}>
+        <ScoreCard label="CVSS Score" value={data.cvss_score} sub="Base severity score" color={sev.color} />
+        <ScoreCard label="EPSS" value={data.epss_score ? `${(data.epss_score * 100).toFixed(2)}%` : null} sub="Exploit probability" color={data.epss_score && data.epss_score > 0.5 ? "#ef4444" : "var(--text)"} />
+        <ScoreCard label="Risk Score" value={data.combined_risk_score ? `${data.combined_risk_score}/100` : null} sub="OsVault composite" color={riskColor} />
+        <ScoreCard label="KEV Status" value={data.in_kev ? "Active" : "Not listed"} sub="CISA exploitation" color={data.in_kev ? "#ef4444" : "#22c55e"} />
+      </div>
+
+      {/* CVSS Vector */}
+      {data.cvss_vector && (
+        <div style={{ marginBottom: 32, padding: "16px 20px", borderRadius: "var(--radius)", border: "1px solid var(--border)", background: "var(--bg-card)" }}>
+          <div style={{ fontSize: 12, color: "var(--text-3)", marginBottom: 8, textTransform: "uppercase", letterSpacing: "0.06em" }}>CVSS Vector</div>
+          <code style={{ fontSize: 13, color: "var(--accent-2)" }}>{data.cvss_vector}</code>
+        </div>
+      )}
+
+      {/* Affected Packages */}
+      {affectedPackages.length > 0 && (
+        <div style={{ marginBottom: 32 }}>
+          <h2 style={{ fontSize: 16, fontWeight: 700, marginBottom: 16, letterSpacing: "-0.01em" }}>Affected Packages</h2>
+          <div style={{ borderRadius: "var(--radius)", border: "1px solid var(--border)", overflow: "hidden" }}>
+            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+              <thead>
+                <tr style={{ background: "var(--bg-card)", borderBottom: "1px solid var(--border)" }}>
+                  <th style={{ padding: "10px 16px", textAlign: "left", color: "var(--text-3)", fontWeight: 600, fontSize: 12, textTransform: "uppercase", letterSpacing: "0.06em" }}>Package</th>
+                  <th style={{ padding: "10px 16px", textAlign: "left", color: "var(--text-3)", fontWeight: 600, fontSize: 12, textTransform: "uppercase", letterSpacing: "0.06em" }}>Ecosystem</th>
+                  <th style={{ padding: "10px 16px", textAlign: "left", color: "var(--text-3)", fontWeight: 600, fontSize: 12, textTransform: "uppercase", letterSpacing: "0.06em" }}>Affected Versions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {affectedPackages.map((pkg, i) => (
+                  <tr key={i} style={{ borderBottom: i < affectedPackages.length - 1 ? "1px solid var(--border)" : "none" }}>
+                    <td style={{ padding: "12px 16px", fontWeight: 600 }}>
+                      {pkg.ecosystem?.toLowerCase() === "npm"
+                        ? <a href={`/npm/${encodeURIComponent(pkg.name)}`} style={{ color: "var(--accent-2)" }}>{pkg.name}</a>
+                        : pkg.name}
+                    </td>
+                    <td style={{ padding: "12px 16px", color: "var(--text-3)" }}>{pkg.ecosystem}</td>
+                    <td style={{ padding: "12px 16px", color: "var(--text-2)", fontFamily: "monospace", fontSize: 12 }}>
+                      {pkg.versions?.slice(0, 5).join(", ") ?? "—"}
+                      {(pkg.versions?.length ?? 0) > 5 && <span style={{ color: "var(--text-3)" }}> +{pkg.versions!.length - 5} more</span>}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
-        {data.cvss_vector && (
-          <p style={{ marginTop: 12, fontSize: 12, color: "#6b7280" }}>
-            Vector: <code style={{ background: "#f3f4f6", padding: "2px 6px", borderRadius: 3 }}>{data.cvss_vector}</code>
-          </p>
-        )}
-      </section>
-
-      {affectedPackages.length > 0 && (
-        <section style={{ marginBottom: 28 }}>
-          <h2 style={{ fontSize: 15, marginBottom: 12 }}>Affected Packages</h2>
-          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
-            <thead>
-              <tr style={{ borderBottom: "2px solid #e5e7eb", textAlign: "left" }}>
-                <th style={{ padding: "6px 8px" }}>Package</th>
-                <th style={{ padding: "6px 8px" }}>Ecosystem</th>
-                <th style={{ padding: "6px 8px" }}>Affected Versions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {affectedPackages.map((pkg, i) => (
-                <tr key={i} style={{ borderBottom: "1px solid #f3f4f6" }}>
-                  <td style={{ padding: "6px 8px", fontWeight: 600 }}>
-                    {pkg.ecosystem?.toLowerCase() === "npm"
-                      ? <a href={`/npm/${encodeURIComponent(pkg.name)}`}>{pkg.name}</a>
-                      : pkg.name}
-                  </td>
-                  <td style={{ padding: "6px 8px", color: "#6b7280" }}>{pkg.ecosystem}</td>
-                  <td style={{ padding: "6px 8px", color: "#6b7280" }}>
-                    {pkg.versions?.slice(0, 6).join(", ") ?? "—"}
-                    {(pkg.versions?.length ?? 0) > 6 && ` +${pkg.versions!.length - 6} more`}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </section>
       )}
 
-      {data.cpe_list && data.cpe_list.length > 0 && (
-        <section style={{ marginBottom: 28 }}>
-          <h2 style={{ fontSize: 15, marginBottom: 8 }}>CPE Identifiers</h2>
-          <div style={{ background: "#f9fafb", border: "1px solid #e5e7eb", borderRadius: 6, padding: 12, maxHeight: 160, overflowY: "auto" }}>
+      {/* CPE */}
+      {data.cpe_list?.length > 0 && (
+        <div style={{ marginBottom: 32 }}>
+          <h2 style={{ fontSize: 16, fontWeight: 700, marginBottom: 16, letterSpacing: "-0.01em" }}>CPE Identifiers</h2>
+          <div style={{ padding: 16, borderRadius: "var(--radius)", border: "1px solid var(--border)", background: "var(--bg-card)", maxHeight: 180, overflowY: "auto" }}>
             {data.cpe_list.slice(0, 20).map((cpe: string, i: number) => (
-              <div key={i} style={{ fontSize: 12, color: "#374151", padding: "2px 0" }}>{cpe}</div>
+              <div key={i} style={{ fontSize: 12, color: "var(--text-3)", padding: "3px 0", fontFamily: "monospace" }}>{cpe}</div>
             ))}
-            {data.cpe_list.length > 20 && <div style={{ fontSize: 12, color: "#9ca3af", marginTop: 4 }}>+{data.cpe_list.length - 20} more</div>}
+            {data.cpe_list.length > 20 && <div style={{ fontSize: 12, color: "var(--text-3)", marginTop: 6 }}>+{data.cpe_list.length - 20} more entries</div>}
           </div>
-        </section>
+        </div>
       )}
 
-      <section style={{ marginBottom: 28, fontSize: 13, color: "#6b7280" }}>
-        {modifiedDate && <p style={{ margin: "4px 0" }}>Last modified: {modifiedDate}</p>}
-        <p style={{ margin: "4px 0" }}>
-          Source: <a href={`https://nvd.nist.gov/vuln/detail/${data.cve_id}`} target="_blank" rel="noopener noreferrer">NVD ↗</a>
-          {" · "}<a href="/checker">Check your dependencies →</a>
-        </p>
-      </section>
+      {/* Meta */}
+      <div style={{ marginBottom: 32, padding: "16px 20px", borderRadius: "var(--radius)", border: "1px solid var(--border)", background: "var(--bg-card)", display: "flex", gap: 24, flexWrap: "wrap", fontSize: 13, color: "var(--text-3)" }}>
+        {modifiedDate && <span>Modified: <span style={{ color: "var(--text-2)" }}>{modifiedDate}</span></span>}
+        <span>Source: <a href={`https://nvd.nist.gov/vuln/detail/${data.cve_id}`} target="_blank" rel="noopener noreferrer" style={{ color: "var(--accent-2)" }}>NVD ↗</a></span>
+        <span><a href="/checker" style={{ color: "var(--accent-2)" }}>Check your dependencies →</a></span>
+      </div>
 
+      {/* Affiliate CTAs */}
       {isCriticalOrHigh && (
-        <div style={{ borderTop: "1px solid #e5e7eb", paddingTop: 20 }}>
-          <div style={{ padding: "12px 16px", background: "#fef2f2", border: "1px solid #fecaca", borderRadius: 6, fontSize: 13, marginBottom: 10 }}>
-            {AFFILIATES.snyk.cta_critical(1)}{" "}
-            <a href={AFFILIATES.snyk.href} target="_blank" rel="noopener noreferrer sponsored" style={{ fontWeight: 600 }}>Try {AFFILIATES.snyk.name} →</a>
+        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          <div style={{ padding: "16px 20px", borderRadius: "var(--radius)", border: "1px solid #ef444430", background: "#ef444408", fontSize: 14 }}>
+            <span style={{ color: "var(--text-2)" }}>{AFFILIATES.snyk.cta_critical(1)}</span>{" "}
+            <a href={AFFILIATES.snyk.href} target="_blank" rel="noopener noreferrer sponsored" style={{ color: "#ef4444", fontWeight: 600 }}>Try {AFFILIATES.snyk.name} →</a>
           </div>
-          <div style={{ padding: "12px 16px", background: "#f9fafb", border: "1px solid #e5e7eb", borderRadius: 6, fontSize: 13 }}>
-            {AFFILIATES.socket.cta_general}{" "}
-            <a href={AFFILIATES.socket.href} target="_blank" rel="noopener noreferrer sponsored" style={{ fontWeight: 600 }}>Try {AFFILIATES.socket.name} →</a>
+          <div style={{ padding: "16px 20px", borderRadius: "var(--radius)", border: "1px solid var(--border)", background: "var(--bg-card)", fontSize: 14 }}>
+            <span style={{ color: "var(--text-2)" }}>{AFFILIATES.socket.cta_general}</span>{" "}
+            <a href={AFFILIATES.socket.href} target="_blank" rel="noopener noreferrer sponsored" style={{ color: "var(--accent-2)", fontWeight: 600 }}>Try {AFFILIATES.socket.name} →</a>
           </div>
         </div>
       )}
