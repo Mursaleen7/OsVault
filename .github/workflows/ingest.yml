@@ -1,0 +1,38 @@
+name: Daily CVE Ingestion
+
+on:
+  schedule:
+    - cron: "0 5 * * *"   # 5:00 AM UTC every day
+  workflow_dispatch:        # allow manual trigger from GitHub UI
+
+jobs:
+  ingest:
+    name: Pull & Upsert CVE Data
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run ingestion script
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+          NVD_API_KEY:  ${{ secrets.NVD_API_KEY }}
+        run: python ingest.py
+
+      - name: Notify on failure
+        if: failure()
+        run: |
+          echo "Ingestion failed at $(date -u). Check the logs above."
+          exit 1
