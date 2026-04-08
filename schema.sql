@@ -66,3 +66,16 @@ create table if not exists package_vulnerabilities (
 
 create index if not exists idx_pkgvuln_package on package_vulnerabilities (package_id);
 create index if not exists idx_pkgvuln_vuln    on package_vulnerabilities (vulnerability_id);
+
+-- -----------------------------------------------------------------------
+-- github_usage  (tracks monthly check usage per GitHub App installation)
+-- -----------------------------------------------------------------------
+create table if not exists github_usage (
+  id              bigint generated always as identity primary key,
+  installation_id bigint      not null,
+  repo            text        not null,
+  pr_number       int         not null,
+  created_at      timestamptz default now()
+);
+
+create index if not exists idx_github_usage_installation on github_usage (installation_id, created_at desc);
