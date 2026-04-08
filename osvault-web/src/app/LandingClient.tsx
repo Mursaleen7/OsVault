@@ -245,14 +245,14 @@ export default function LandingClient({ stats, recent }: Props) {
             </h1>
           </Reveal>
           
-          <Reveal delayClass="reveal-delay-1">
+          <Reveal delay={1}>
             <p className="hero-sub">
               Real-time CVE tracking with CVSS scores, EPSS exploit probability,
               and CISA KEV data — for npm and PyPI packages.
             </p>
           </Reveal>
           
-          <Reveal delayClass="reveal-delay-2">
+          <Reveal delay={2}>
             <div className="hero-ctas">
               <a href="/checker" className="btn-primary" id="hero-scan-btn">Scan Dependencies</a>
               <a href="#how-it-works" className="btn-outline" id="hero-approach-btn">Our Approach</a>
