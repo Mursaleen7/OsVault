@@ -158,7 +158,7 @@ export default async function CVEPage({ params }: { params: Promise<{ id: string
                       <span style={{ fontSize: 11, color: "var(--slate-dim)", display: "block", marginBottom: 4, fontFamily: "'JetBrains Mono', monospace", textTransform: "uppercase" }}>{pkg.ecosystem}</span>
                       <strong style={{ fontWeight: 500, color: "var(--text)" }}>
                         {pkg.ecosystem?.toLowerCase() === "npm"
-                          ? <a href={`/npm/${encodeURIComponent(pkg.name)}`} style={{ textDecoration: "underline", textUnderlineOffset: 4, decorationColor: "var(--border)" }}>{pkg.name}</a>
+                          ? <a href={`/npm/${encodeURIComponent(pkg.name)}`} style={{ textDecoration: "underline", textUnderlineOffset: 4, textDecorationColor: "var(--border)" }}>{pkg.name}</a>
                           : pkg.name}
                       </strong>
                     </td>
@@ -198,7 +198,7 @@ export default async function CVEPage({ params }: { params: Promise<{ id: string
           <a href={`https://nvd.nist.gov/vuln/detail/${data.cve_id}`} target="_blank" rel="noopener noreferrer" style={{ color: "var(--accent)", fontWeight: 500, textDecoration: "none" }}>NVD NIST Database ↗</a>
         </div>
         <div style={{ marginLeft: "auto", alignSelf: "center" }}>
-          <a href="/checker" style={{ display: "inline-block", color: "var(--text)", fontWeight: 500, textDecoration: "underline", textUnderlineOffset: 4, decorationColor: "var(--border)" }}>Scan Project Settings →</a>
+          <a href="/checker" style={{ display: "inline-block", color: "var(--text)", fontWeight: 500, textDecoration: "underline", textUnderlineOffset: 4, textDecorationColor: "var(--border)" }}>Scan Project Settings →</a>
         </div>
       </footer>
 
