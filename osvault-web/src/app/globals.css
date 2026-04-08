@@ -132,11 +132,14 @@ code, pre, .mono {
 .navbar-link {
   font-size: 13px;
   font-weight: 500;
-  color: var(--slate);
-  transition: color 0.2s;
+  color: rgba(255, 255, 255, 0.85);
+  transition: color 0.2s, text-shadow 0.2s;
 }
 
-.navbar-link:hover { color: var(--white); }
+.navbar-link:hover {
+  color: var(--white-pure);
+  text-shadow: 0 0 12px rgba(255, 255, 255, 0.4);
+}
 
 /* ===== BUTTONS ===== */
 .btn-primary {
@@ -193,6 +196,7 @@ code, pre, .mono {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  background: var(--red);
   overflow: hidden;
 }
 
