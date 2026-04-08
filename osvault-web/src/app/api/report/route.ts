@@ -3,8 +3,8 @@ import { createClient } from "@supabase/supabase-js";
 
 // Use service role key server-side so we can write to leads table
 const sb = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
+  process.env.NEXT_PUBLIC_SUPABASE_URL ?? "",
+  process.env.SUPABASE_SERVICE_ROLE_KEY ?? ""
 );
 
 export async function POST(req: NextRequest) {
