@@ -188,7 +188,7 @@ export default async function CVEPage({ params }: { params: Promise<{ id: string
       )}
 
       {/* Meta Footer */}
-      <footer style={{ marginBottom: 64, paddingTop: 40, borderTop: "1px solid var(--border)", display: "flex", flexWrap: "wrap", justifyContext: "space-between", gap: 48, fontSize: 14, color: "var(--text-2)" }}>
+      <footer style={{ marginBottom: 64, paddingTop: 40, borderTop: "1px solid var(--border)", display: "flex", flexWrap: "wrap", justifyContent: "space-between", gap: 48, fontSize: 14, color: "var(--text-2)" }}>
         <div>
           <span style={{ color: "var(--slate-dim)", fontSize: 11, fontFamily: "'JetBrains Mono', monospace", textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: 8 }}>Last Modified</span>
           <span style={{ color: "var(--text)", fontWeight: 500 }}>{modifiedDate ?? "Unknown"}</span>
