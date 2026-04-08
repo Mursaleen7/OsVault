@@ -8,21 +8,21 @@ export const metadata = {
 
 function Nav() {
   return (
-    <nav style={{
-      position: "sticky", top: 0, zIndex: 50,
-      borderBottom: "1px solid var(--border)",
-      background: "rgba(10,10,15,0.85)",
-      backdropFilter: "blur(12px)",
-      WebkitBackdropFilter: "blur(12px)",
-    }}>
-      <div style={{ maxWidth: 1100, margin: "0 auto", padding: "0 24px", height: 56, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        <a href="/" style={{ display: "flex", alignItems: "center", gap: 8, color: "var(--text)", fontWeight: 700, fontSize: 17, letterSpacing: "-0.02em" }}>
-          <span style={{ width: 28, height: 28, borderRadius: 8, background: "linear-gradient(135deg,#6366f1,#818cf8)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, fontWeight: 800, color: "#fff" }}>O</span>
+    <nav className="navbar" id="navbar">
+      <div className="navbar-inner">
+        <a href="/" className="navbar-logo" id="nav-logo">
+          <span className="navbar-logo-icon">
+            <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect x="2" y="2" width="28" height="28" rx="6" stroke="#E63946" strokeWidth="2.5" fill="none" />
+              <rect x="8" y="8" width="16" height="16" rx="3" stroke="#E63946" strokeWidth="2" fill="none" />
+              <circle cx="16" cy="16" r="3" fill="#E63946" />
+            </svg>
+          </span>
           OsVault
         </a>
-        <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-          <a href="/checker" style={{ padding: "6px 14px", borderRadius: "var(--radius-sm)", fontSize: 13, color: "var(--text-2)", transition: "color 0.15s" }}>Checker</a>
-          <a href="/checker" style={{ padding: "6px 16px", borderRadius: "var(--radius-sm)", fontSize: 13, fontWeight: 600, background: "var(--accent)", color: "#fff" }}>
+        <div className="navbar-right">
+          <a href="/checker" className="navbar-link" id="nav-checker">Checker</a>
+          <a href="/checker" className="btn-primary" id="nav-scan-btn">
             Scan Dependencies
           </a>
         </div>
@@ -33,13 +33,36 @@ function Nav() {
 
 function Footer() {
   return (
-    <footer style={{ borderTop: "1px solid var(--border)", marginTop: 80, padding: "32px 24px" }}>
-      <div style={{ maxWidth: 1100, margin: "0 auto", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 16 }}>
-        <span style={{ fontSize: 13, color: "var(--text-3)" }}>© 2026 OsVault. Real-time vulnerability intelligence.</span>
-        <div style={{ display: "flex", gap: 20, fontSize: 13, color: "var(--text-3)" }}>
-          <a href="/checker" style={{ color: "var(--text-3)" }}>Checker</a>
-          <a href="https://nvd.nist.gov" target="_blank" rel="noopener noreferrer" style={{ color: "var(--text-3)" }}>NVD</a>
-          <a href="https://osv.dev" target="_blank" rel="noopener noreferrer" style={{ color: "var(--text-3)" }}>OSV</a>
+    <footer className="footer">
+      <div className="container">
+        <div className="footer-inner">
+          <div className="footer-logo">
+            <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" width="24" height="24">
+              <rect x="2" y="2" width="28" height="28" rx="6" stroke="#E63946" strokeWidth="2.5" fill="none" />
+              <rect x="8" y="8" width="16" height="16" rx="3" stroke="#E63946" strokeWidth="2" fill="none" />
+              <circle cx="16" cy="16" r="3" fill="#E63946" />
+            </svg>
+            OsVault
+          </div>
+          <div className="footer-col">
+            <h4>Product</h4>
+            <a href="/checker">Dependency Scanner</a>
+            <a href="/">CVE Browser</a>
+          </div>
+          <div className="footer-col">
+            <h4>Data Sources</h4>
+            <a href="https://nvd.nist.gov" target="_blank" rel="noopener noreferrer">NVD</a>
+            <a href="https://osv.dev" target="_blank" rel="noopener noreferrer">OSV.dev</a>
+            <a href="https://www.first.org/epss/" target="_blank" rel="noopener noreferrer">FIRST EPSS</a>
+          </div>
+          <div className="footer-col">
+            <h4>Legal</h4>
+            <a href="#">Privacy Policy</a>
+          </div>
+        </div>
+        <div className="footer-bottom">
+          <span className="footer-copy">© 2026 OsVault. Real-time vulnerability intelligence.</span>
+          <span className="footer-badge">ALL SYSTEMS SECURE</span>
         </div>
       </div>
     </footer>
