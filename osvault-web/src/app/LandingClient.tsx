@@ -22,27 +22,33 @@ interface Props {
 }
 
 /* ── Scroll Reveal ── */
-function useReveal() {
+function Reveal({ children, className = "", delay = 0 }: {
+  children: React.ReactNode; className?: string; delay?: number;
+}) {
   const ref = useRef<HTMLDivElement>(null);
+  const [isVisible, setIsVisible] = useState(false);
+
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
     const io = new IntersectionObserver(
-      ([e]) => { if (e.isIntersecting) { el.classList.add("visible"); io.disconnect(); } },
+      ([e]) => { 
+        if (e.isIntersecting) { 
+          setIsVisible(true); 
+          io.disconnect(); 
+        } 
+      },
       { threshold: 0.1 }
     );
     io.observe(el);
     return () => io.disconnect();
   }, []);
-  return ref;
-}
 
-function Reveal({ children, className = "", delay = 0 }: {
-  children: React.ReactNode; className?: string; delay?: number;
-}) {
-  const ref = useReveal();
   return (
-    <div ref={ref} className={`reveal ${delay ? `reveal-delay-${delay}` : ""} ${className}`.trim()}>
+    <div 
+      ref={ref} 
+      className={`reveal ${isVisible ? "visible" : ""} ${delay ? `reveal-delay-${delay}` : ""} ${className}`.trim()}
+    >
       {children}
     </div>
   );
