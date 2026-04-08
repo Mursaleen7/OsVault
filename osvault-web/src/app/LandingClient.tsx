@@ -211,24 +211,53 @@ export default function LandingClient({ stats, recent }: Props) {
       {/* ═══ HERO ═══ */}
       <section className="hero" id="hero">
         <div className="hero-bg-graphic">
-          <svg viewBox="0 0 600 600" fill="none" style={{ width: "100%", height: "100%" }}>
-            <rect x="60"  y="60"  width="480" height="480" rx="72" stroke="#B82D38" strokeWidth="1.5" opacity=".35" />
-            <rect x="120" y="120" width="360" height="360" rx="54" stroke="#B82D38" strokeWidth="1.5" opacity=".25" />
-            <rect x="180" y="180" width="240" height="240" rx="36" stroke="#B82D38" strokeWidth="1.5" opacity=".18" />
-            <rect x="230" y="230" width="140" height="140" rx="24" stroke="#B82D38" strokeWidth="1.5" opacity=".10" />
+          <svg viewBox="0 0 800 800" fill="none" style={{ width: "100%", height: "100%", animation: "radar-scan 40s linear infinite" }}>
+            <defs>
+              <linearGradient id="radarSweep" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="var(--red)" />
+                <stop offset="100%" stopColor="transparent" />
+              </linearGradient>
+            </defs>
+            {/* Grid Rings */}
+            <circle cx="400" cy="400" r="320" stroke="rgba(230, 57, 70, 0.2)" strokeWidth="1" strokeDasharray="4 8" />
+            <circle cx="400" cy="400" r="240" stroke="rgba(255, 255, 255, 0.05)" strokeWidth="1" />
+            <circle cx="400" cy="400" r="140" stroke="rgba(34, 197, 94, 0.15)" strokeWidth="1" strokeDasharray="2 4" />
+            
+            {/* Crosshairs */}
+            <path d="M400,40 L400,760 M40,400 L760,400" stroke="rgba(255, 255, 255, 0.04)" strokeWidth="1" />
+            
+            {/* Radar Sweep Arc */}
+            <path d="M400,400 L400,80 A320,320 0 0,1 720,400 Z" fill="url(#radarSweep)" opacity="0.15" />
+            
+            {/* Pulsing Nodes */}
+            <circle cx="580" cy="220" r="5" fill="var(--red)" style={{ animation: "radar-pulse 2s infinite" }} />
+            <circle cx="240" cy="560" r="3" fill="var(--green)" style={{ animation: "radar-pulse 3s infinite 1s" }} />
+            <circle cx="600" cy="500" r="4" fill="var(--white-pure)" style={{ animation: "radar-pulse 4s infinite 0.5s" }} />
+            <circle cx="280" cy="280" r="2" fill="var(--red)" style={{ animation: "radar-pulse 2.5s infinite 2s" }} />
           </svg>
         </div>
 
         <div className="container hero-content">
-          <h1>Vulnerability intelligence for every dependency.</h1>
-          <p className="hero-sub">
-            Real-time CVE tracking with CVSS scores, EPSS exploit probability,
-            and CISA KEV data — for npm and PyPI packages.
-          </p>
-          <div className="hero-ctas">
-            <a href="/checker" className="btn-primary" id="hero-scan-btn">Scan Dependencies</a>
-            <a href="#how-it-works" className="btn-outline" id="hero-approach-btn">Our Approach</a>
-          </div>
+          <Reveal>
+            <h1>
+              Vulnerability intelligence<br/>
+              <span className="text-glow">for every dependency.</span>
+            </h1>
+          </Reveal>
+          
+          <Reveal delayClass="reveal-delay-1">
+            <p className="hero-sub">
+              Real-time CVE tracking with CVSS scores, EPSS exploit probability,
+              and CISA KEV data — for npm and PyPI packages.
+            </p>
+          </Reveal>
+          
+          <Reveal delayClass="reveal-delay-2">
+            <div className="hero-ctas">
+              <a href="/checker" className="btn-primary" id="hero-scan-btn">Scan Dependencies</a>
+              <a href="#how-it-works" className="btn-outline" id="hero-approach-btn">Our Approach</a>
+            </div>
+          </Reveal>
         </div>
 
         <Ticker />
