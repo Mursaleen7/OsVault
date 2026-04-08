@@ -14,6 +14,8 @@ jobs:
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
+        env:
+          FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
       - name: Set up Rust
         uses: dtolnay/rust-toolchain@stable
@@ -40,4 +42,24 @@ jobs:
 
       - name: Notify on failure
         if: failure()
-        run: echo "Ingestion failed at $(date -u). Check the logs above." && exit 1
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          username: ${{ secrets.NOTIFY_EMAIL }}
+          password: ${{ secrets.NOTIFY_EMAIL_PASSWORD }}
+          to: ${{ secrets.NOTIFY_EMAIL }}
+          subject: "❌ OsVault ingest FAILED"
+          body: "The daily CVE ingestion failed. Check the logs: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+
+      - name: Notify on success
+        if: success()
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          username: ${{ secrets.NOTIFY_EMAIL }}
+          password: ${{ secrets.NOTIFY_EMAIL_PASSWORD }}
+          to: ${{ secrets.NOTIFY_EMAIL }}
+          subject: "✅ OsVault ingest succeeded"
+          body: "Daily CVE ingestion completed successfully. View run: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
