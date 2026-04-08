@@ -1,5 +1,24 @@
+# Environment
 .env
+.env.local
+.env.*.local
+
+# Dependencies
+node_modules/
+
+# Next.js
+osvault-web/.next/
+osvault-web/out/
+
+# Rust
+ingest-rs/target/
+
+# Python
 __pycache__/
 *.pyc
 *.pyo
+
+# Misc
 .DS_Store
+*.pem
+dist/
