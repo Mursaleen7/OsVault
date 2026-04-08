@@ -217,29 +217,61 @@ export default function LandingClient({ stats, recent }: Props) {
       {/* ═══ HERO ═══ */}
       <section className="hero" id="hero">
         <div className="hero-bg-graphic">
-          <svg viewBox="0 0 800 800" fill="none" style={{ width: "100%", height: "100%", animation: "radar-scan 40s linear infinite" }}>
+          <svg className="hero-clean-shield" viewBox="0 0 800 800" fill="none" style={{ width: "100%", height: "100%" }}>
             <defs>
-              <linearGradient id="radarSweep" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="var(--red)" />
+              <radialGradient id="vaultGlow" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stopColor="rgba(230, 57, 70, 0.15)" />
+                <stop offset="30%" stopColor="rgba(230, 57, 70, 0.05)" />
+                <stop offset="100%" stopColor="transparent" />
+              </radialGradient>
+              <linearGradient id="ringGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="rgba(255, 255, 255, 0.02)" />
+                <stop offset="50%" stopColor="rgba(255, 255, 255, 0.08)" />
+                <stop offset="100%" stopColor="transparent" />
+              </linearGradient>
+              <linearGradient id="ringGradientRed" x1="100%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stopColor="rgba(230, 57, 70, 0)" />
+                <stop offset="50%" stopColor="rgba(230, 57, 70, 0.2)" />
                 <stop offset="100%" stopColor="transparent" />
               </linearGradient>
             </defs>
-            {/* Grid Rings */}
-            <circle cx="400" cy="400" r="320" stroke="rgba(230, 57, 70, 0.2)" strokeWidth="1" strokeDasharray="4 8" />
-            <circle cx="400" cy="400" r="240" stroke="rgba(255, 255, 255, 0.05)" strokeWidth="1" />
-            <circle cx="400" cy="400" r="140" stroke="rgba(34, 197, 94, 0.15)" strokeWidth="1" strokeDasharray="2 4" />
-            
-            {/* Crosshairs */}
-            <path d="M400,40 L400,760 M40,400 L760,400" stroke="rgba(255, 255, 255, 0.04)" strokeWidth="1" />
-            
-            {/* Radar Sweep Arc */}
-            <path d="M400,400 L400,80 A320,320 0 0,1 720,400 Z" fill="url(#radarSweep)" opacity="0.15" />
-            
-            {/* Pulsing Nodes */}
-            <circle cx="580" cy="220" r="5" fill="var(--red)" style={{ animation: "radar-pulse 2s infinite" }} />
-            <circle cx="240" cy="560" r="3" fill="var(--green)" style={{ animation: "radar-pulse 3s infinite 1s" }} />
-            <circle cx="600" cy="500" r="4" fill="var(--white-pure)" style={{ animation: "radar-pulse 4s infinite 0.5s" }} />
-            <circle cx="280" cy="280" r="2" fill="var(--red)" style={{ animation: "radar-pulse 2.5s infinite 2s" }} />
+
+            {/* Base Glow */}
+            <circle cx="400" cy="400" r="380" fill="url(#vaultGlow)" />
+
+            {/* Elegant Crosshairs */}
+            <g stroke="rgba(255, 255, 255, 0.03)" strokeWidth="1">
+              <line x1="400" y1="40" x2="400" y2="760" />
+              <line x1="40" y1="400" x2="760" y2="400" />
+              <circle cx="400" cy="400" r="320" strokeDasharray="2 8" fill="none" />
+            </g>
+
+            {/* Outer Rings */}
+            <g className="vault-spin-slow" style={{ transformOrigin: '400px 400px' }}>
+              <circle cx="400" cy="400" r="320" stroke="url(#ringGradient)" strokeWidth="1" />
+              <circle cx="400" cy="400" r="320" stroke="rgba(255, 255, 255, 0.3)" strokeWidth="1.5" strokeDasharray="200 1810" strokeLinecap="round" />
+              <circle cx="400" cy="400" r="340" stroke="url(#ringGradientRed)" strokeWidth="1" strokeDasharray="2 12" />
+            </g>
+
+            {/* Middle Rings */}
+            <g className="vault-spin-slower-reverse" style={{ transformOrigin: '400px 400px' }}>
+              <circle cx="400" cy="400" r="220" stroke="url(#ringGradient)" strokeWidth="1" />
+              <circle cx="400" cy="400" r="220" stroke="var(--red)" strokeWidth="1.5" strokeDasharray="150 1232" strokeLinecap="round" />
+              <circle cx="400" cy="400" r="210" stroke="rgba(255, 255, 255, 0.05)" strokeWidth="4" strokeDasharray="1 8" />
+            </g>
+
+            {/* Inner Rings */}
+            <g className="vault-spin-medium" style={{ transformOrigin: '400px 400px' }}>
+              <circle cx="400" cy="400" r="100" stroke="url(#ringGradientRed)" strokeWidth="1" />
+              <circle cx="400" cy="400" r="100" stroke="var(--white-pure)" strokeWidth="1.5" strokeDasharray="80 548" strokeLinecap="round" />
+            </g>
+
+            {/* Center Mechanism */}
+            <g className="vault-pulse" style={{ transformOrigin: '400px 400px' }}>
+              <path d="M400,370 L430,400 L400,430 L370,400 Z" fill="none" stroke="rgba(230, 57, 70, 0.4)" strokeWidth="1" />
+              <path d="M400,385 L415,400 L400,415 L385,400 Z" fill="var(--red)" opacity="0.6" />
+              <circle cx="400" cy="400" r="4" fill="var(--white-pure)" />
+            </g>
           </svg>
         </div>
 
@@ -270,7 +302,7 @@ export default function LandingClient({ stats, recent }: Props) {
       </section>
 
       {/* ═══ THE PROBLEM ═══ */}
-      <section className="section" id="the-problem">
+      <section className="section section-glow-right" id="the-problem">
         <div className="container">
           <Reveal>
             <div className="section-eyebrow">
@@ -308,7 +340,7 @@ export default function LandingClient({ stats, recent }: Props) {
       </section>
 
       {/* ═══ INTRODUCING OSVAULT ═══ */}
-      <section className="section intro-section" id="how-it-works">
+      <section className="section intro-section section-glow-red" id="how-it-works">
         <div className="container" style={{ position: "relative" }}>
           <div className="glitch-line" style={{ top: "48%", left: 0, width: "12%" }} />
           <div className="glitch-line" style={{ top: "52%", right: 0, left: "auto", width: "12%", animationDirection: "reverse", animationDelay: "0.4s" }} />
@@ -412,7 +444,7 @@ export default function LandingClient({ stats, recent }: Props) {
       </section>
 
       {/* ═══ REAL-TIME MONITORING ═══ */}
-      <section className="section" id="realtime">
+      <section className="section section-glow-left" id="realtime">
         <div className="container">
           <div className="split-section">
             <Reveal>
@@ -464,7 +496,7 @@ export default function LandingClient({ stats, recent }: Props) {
       </section>
 
       {/* ═══ SCORING ═══ */}
-      <section className="section" id="scoring">
+      <section className="section section-glow-right" id="scoring">
         <div className="container">
           <div className="split-section">
             <div>
@@ -526,7 +558,7 @@ export default function LandingClient({ stats, recent }: Props) {
       </section>
 
       {/* ═══ CAPABILITIES ═══ */}
-      <section className="section" id="capabilities">
+      <section className="section section-glow-red" id="capabilities">
         <div className="container">
           <Reveal>
             <h2 className="section-headline" style={{ textAlign: "center" }}>
@@ -583,7 +615,7 @@ export default function LandingClient({ stats, recent }: Props) {
       </section>
 
       {/* ═══ TERMINAL ═══ */}
-      <section className="section" id="terminal-section">
+      <section className="section section-glow-left" id="terminal-section">
         <div className="container">
           <Reveal>
             <h2 className="section-headline" style={{ textAlign: "center", marginBottom: 12 }}>
@@ -603,7 +635,7 @@ export default function LandingClient({ stats, recent }: Props) {
       </section>
 
       {/* ═══ RECENT CVEs ═══ */}
-      <section className="section" id="recent-cves">
+      <section className="section section-glow-right" id="recent-cves">
         <div className="container">
           <Reveal>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 20 }}>
@@ -651,7 +683,7 @@ export default function LandingClient({ stats, recent }: Props) {
       </section>
 
       {/* ═══ CTA ═══ */}
-      <section className="section waitlist-section" id="waitlist">
+      <section className="section waitlist-section section-glow-left" id="waitlist">
         <div className="container">
           <Reveal><h2 className="section-headline">Start scanning today.</h2></Reveal>
           <Reveal>
@@ -671,7 +703,7 @@ export default function LandingClient({ stats, recent }: Props) {
       </section>
 
       {/* ═══ FAQ ═══ */}
-      <section className="section faq-section" id="faq">
+      <section className="section faq-section section-glow-red" id="faq">
         <div className="container">
           <Reveal><h2 className="section-headline">Frequently asked questions.</h2></Reveal>
           <div className="faq-list">
