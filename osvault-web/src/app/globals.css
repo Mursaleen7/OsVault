@@ -224,6 +224,13 @@ code, pre, .mono {
   position: relative;
   z-index: 2;
   max-width: 55%;
+  margin-left: 0;
+}
+
+.hero .container {
+  margin-left: 60px;
+  margin-right: 0;
+  max-width: 100%;
 }
 
 .hero h1 {
@@ -1398,6 +1405,7 @@ code, pre, .mono {
   .stats-row { grid-template-columns: 1fr; }
   .hero h1 { font-size: clamp(32px, 8vw, 48px); }
   .hero-content { max-width: 100%; }
+  .hero .container { margin-left: 0; }
   .navbar-right { gap: 10px; }
   .navbar-link { display: none; }
 }
