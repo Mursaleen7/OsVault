@@ -197,6 +197,358 @@ function Ticker() {
   );
 }
 
+/* ── Cinematic Workflow Demo ── */
+function MockVideoPlayer() {
+  const [scene, setScene] = useState(0);
+  const [autoStarted, setAutoStarted] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const cycleRef = useRef(0);
+  const [cycleKey, setCycleKey] = useState(0);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Total scenes: 0 = idle, 1-8 = workflow scenes
+  const TOTAL_SCENES = 8;
+  const SCENE_DURATION = [
+    0,     // 0: idle (not used when playing)
+    1800,  // 1: Editor opens, file tree highlights
+    2200,  // 2: Code visible, cursor blinks on vuln line
+    1600,  // 3: Scan command typed in terminal
+    2400,  // 4: Scan progress & analysis
+    2000,  // 5: Vulnerability found — critical alert
+    2800,  // 6: Dashboard view — risk gauge + CVE card
+    2200,  // 7: PDF report generated
+    2000,  // 8: Success — all clear, loop reset
+  ];
+
+  // Auto-start on viewport intersection
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && !autoStarted) {
+          setAutoStarted(true);
+        }
+      },
+      { threshold: 0.4 }
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, [autoStarted]);
+
+  // Scene sequencer
+  useEffect(() => {
+    if (!autoStarted) return;
+    if (scene === 0) {
+      // Start the first scene after a brief delay
+      const t = setTimeout(() => setScene(1), 600);
+      return () => clearTimeout(t);
+    }
+
+    const duration = SCENE_DURATION[scene] || 2000;
+    const t = setTimeout(() => {
+      if (scene >= TOTAL_SCENES) {
+        // Reset and loop
+        cycleRef.current += 1;
+        setCycleKey(cycleRef.current);
+        setScene(0);
+      } else {
+        setScene(s => s + 1);
+      }
+    }, duration);
+    return () => clearTimeout(t);
+  }, [scene, autoStarted]);
+
+  const isPlaying = scene > 0;
+  const totalDuration = SCENE_DURATION.reduce((a, b) => a + b, 0);
+
+  if (!mounted) {
+    return (
+      <div className="wf-frame" ref={containerRef}>
+        <div className="wf-chrome">
+          <div className="wf-chrome-dots">
+            <span className="wf-dot wf-dot-r" />
+            <span className="wf-dot wf-dot-y" />
+            <span className="wf-dot wf-dot-g" />
+          </div>
+          <div className="wf-chrome-title">OsVault Workflow</div>
+        </div>
+        <div className="wf-content"></div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="wf-frame" ref={containerRef}>
+      {/* ── Top bar: macOS window chrome ── */}
+      <div className="wf-chrome">
+        <div className="wf-chrome-dots">
+          <span className="wf-dot wf-dot-r" />
+          <span className="wf-dot wf-dot-y" />
+          <span className="wf-dot wf-dot-g" />
+        </div>
+        <div className="wf-chrome-title">
+          {scene >= 1 && scene <= 2 ? 'package.json — my-app' :
+           scene >= 3 && scene <= 5 ? 'Terminal — osvault' :
+           scene >= 6 && scene <= 7 ? 'OsVault — Security Report' :
+           scene === 8 ? 'Terminal — osvault' :
+           'OsVault Workflow'}
+        </div>
+        <div className="wf-chrome-actions">
+          {isPlaying && <span className="wf-rec-dot" />}
+        </div>
+      </div>
+
+      {/* ── Content area ── */}
+      <div className="wf-content" key={cycleKey}>
+
+        {/* ── Scene 0: Idle state ── */}
+        {!isPlaying && (
+          <div className="wf-idle">
+            <div className="wf-idle-bg" />
+            <div className="wf-idle-icon">
+              <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+              </svg>
+            </div>
+            <div className="wf-idle-title">SECURITY WORKFLOW</div>
+            <div className="wf-idle-sub">Auto-playing demo</div>
+            <div className="wf-idle-loader">
+              <div className="wf-idle-loader-bar" />
+            </div>
+          </div>
+        )}
+
+        {/* ── Scenes 1-2: VS Code Editor ── */}
+        {(scene === 1 || scene === 2) && (
+          <div className="wf-editor wf-scene-enter">
+            {/* Sidebar */}
+            <div className="wf-sidebar">
+              <div className="wf-sidebar-title">EXPLORER</div>
+              <div className="wf-file-tree">
+                <div className="wf-file wf-file-dir">▸ node_modules</div>
+                <div className="wf-file wf-file-dir">▸ src</div>
+                <div className={`wf-file ${scene >= 1 ? 'wf-file-active' : ''}`}>
+                  <span className="wf-file-icon">{ }</span> package.json
+                </div>
+                <div className="wf-file">
+                  <span className="wf-file-icon">TS</span> index.ts
+                </div>
+                <div className="wf-file">
+                  <span className="wf-file-icon">⚙</span> tsconfig.json
+                </div>
+                <div className="wf-file wf-file-dim">
+                  <span className="wf-file-icon">◆</span> .env
+                </div>
+              </div>
+            </div>
+            {/* Code area */}
+            <div className="wf-code-area">
+              {/* Tab bar */}
+              <div className="wf-tab-bar">
+                <div className="wf-tab wf-tab-active">
+                  <span className="wf-tab-icon">{ }</span> package.json
+                  <span className="wf-tab-close">×</span>
+                </div>
+                <div className="wf-tab">
+                  <span className="wf-tab-icon">TS</span> index.ts
+                </div>
+              </div>
+              {/* Code lines */}
+              <div className="wf-code-lines">
+                <div className="wf-code-row"><span className="wf-ln">1</span><span className="wf-code-text wf-c-punct">{'{'}</span></div>
+                <div className="wf-code-row"><span className="wf-ln">2</span><span className="wf-code-text">  <span className="wf-c-key">&quot;name&quot;</span>: <span className="wf-c-str">&quot;my-app&quot;</span>,</span></div>
+                <div className="wf-code-row"><span className="wf-ln">3</span><span className="wf-code-text">  <span className="wf-c-key">&quot;version&quot;</span>: <span className="wf-c-str">&quot;1.0.0&quot;</span>,</span></div>
+                <div className="wf-code-row"><span className="wf-ln">4</span><span className="wf-code-text">  <span className="wf-c-key">&quot;dependencies&quot;</span>: {'{'}</span></div>
+                <div className="wf-code-row"><span className="wf-ln">5</span><span className="wf-code-text">    <span className="wf-c-key">&quot;express&quot;</span>: <span className="wf-c-str">&quot;^4.18.2&quot;</span>,</span></div>
+                <div className="wf-code-row"><span className="wf-ln">6</span><span className="wf-code-text">    <span className="wf-c-key">&quot;cors&quot;</span>: <span className="wf-c-str">&quot;^2.8.5&quot;</span>,</span></div>
+                <div className={`wf-code-row ${scene >= 2 ? 'wf-code-vuln' : ''}`}>
+                  <span className="wf-ln">7</span>
+                  <span className="wf-code-text">    <span className="wf-c-key">&quot;lodash&quot;</span>: <span className={scene >= 2 ? 'wf-c-danger' : 'wf-c-str'}>&quot;4.17.20&quot;</span>,</span>
+                  {scene >= 2 && <span className="wf-code-warning-icon">⚠</span>}
+                </div>
+                <div className="wf-code-row"><span className="wf-ln">8</span><span className="wf-code-text">    <span className="wf-c-key">&quot;dotenv&quot;</span>: <span className="wf-c-str">&quot;^16.3.1&quot;</span>,</span></div>
+                <div className="wf-code-row"><span className="wf-ln">9</span><span className="wf-code-text">    <span className="wf-c-key">&quot;axios&quot;</span>: <span className="wf-c-str">&quot;^1.6.0&quot;</span></span></div>
+                <div className="wf-code-row"><span className="wf-ln">10</span><span className="wf-code-text">  {'}'}</span></div>
+                <div className="wf-code-row"><span className="wf-ln">11</span><span className="wf-code-text wf-c-punct">{'}'}</span></div>
+              </div>
+              {/* Minimap */}
+              <div className="wf-minimap">
+                <div className="wf-minimap-block" />
+                <div className="wf-minimap-block short" />
+                <div className="wf-minimap-block" />
+                <div className="wf-minimap-block short" />
+                <div className="wf-minimap-block danger" />
+                <div className="wf-minimap-block short" />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ── Scenes 3-5: Terminal ── */}
+        {(scene >= 3 && scene <= 5) && (
+          <div className="wf-terminal wf-scene-enter">
+            <div className="wf-term-tabs">
+              <span className="wf-term-tab wf-term-tab-active">TERMINAL</span>
+              <span className="wf-term-tab">PROBLEMS</span>
+              <span className="wf-term-tab">OUTPUT</span>
+            </div>
+            <div className="wf-term-body">
+              <div className="wf-term-line wf-term-prompt">
+                <span className="wf-term-caret">❯</span>
+                <span className="wf-term-typing">osvault scan --file package.json --report pdf</span>
+              </div>
+
+              {scene >= 4 && (
+                <>
+                  <div className="wf-term-line wf-term-info wf-stagger-1">
+                    <span className="wf-term-ts">12:04:31</span>
+                    [info] Resolving dependency tree...
+                  </div>
+                  <div className="wf-term-line wf-term-info wf-stagger-2">
+                    <span className="wf-term-ts">12:04:31</span>
+                    [info] Found <span className="wf-term-white">5 direct</span> + <span className="wf-term-white">47 transitive</span> dependencies
+                  </div>
+                  <div className="wf-term-line wf-term-info wf-stagger-3">
+                    <span className="wf-term-ts">12:04:32</span>
+                    [info] Querying NVD API... <span className="wf-term-green">✓</span>
+                  </div>
+                  <div className="wf-term-line wf-term-info wf-stagger-4">
+                    <span className="wf-term-ts">12:04:32</span>
+                    [info] Querying OSV.dev... <span className="wf-term-green">✓</span>
+                  </div>
+                  <div className="wf-term-line wf-term-info wf-stagger-5">
+                    <span className="wf-term-ts">12:04:33</span>
+                    [info] Enriching with EPSS + KEV data... <span className="wf-term-green">✓</span>
+                  </div>
+                </>
+              )}
+
+              {scene >= 5 && (
+                <>
+                  <div className="wf-term-line wf-term-divider wf-stagger-1" />
+                  <div className="wf-term-line wf-term-crit wf-stagger-2">
+                    <span className="wf-term-ts">12:04:33</span>
+                    ✖ CRITICAL  CVE-2020-28500 — lodash@4.17.20
+                  </div>
+                  <div className="wf-term-line wf-term-warning wf-stagger-3">
+                    <span className="wf-term-ts">12:04:33</span>
+                    ▲ HIGH      CVE-2021-23337 — lodash@4.17.20
+                  </div>
+                  <div className="wf-term-line wf-term-info wf-stagger-4">
+                    <span className="wf-term-ts">12:04:34</span>
+                    [result] <span className="wf-term-white">2 vulnerabilities</span> found across <span className="wf-term-white">1 package</span>
+                  </div>
+                  <div className="wf-term-line wf-term-info wf-stagger-5">
+                    <span className="wf-term-ts">12:04:34</span>
+                    [info] Risk score: <span className="wf-term-red">F (92/100)</span> — Immediate action required
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* ── Scenes 6-7: Dashboard ── */}
+        {(scene === 6 || scene === 7) && (
+          <div className="wf-dashboard wf-scene-enter">
+            <div className="wf-dash-header">
+              <div className="wf-dash-breadcrumb">
+                <span className="wf-dash-bc-item">Reports</span>
+                <span className="wf-dash-bc-sep">/</span>
+                <span className="wf-dash-bc-item wf-dash-bc-active">package.json scan</span>
+              </div>
+              <div className="wf-dash-badge">
+                <span className="wf-dash-badge-dot" />
+                LIVE
+              </div>
+            </div>
+            <div className="wf-dash-body">
+              {/* Risk gauge */}
+              <div className="wf-gauge-section">
+                <div className="wf-gauge">
+                  <svg viewBox="0 0 120 120" className="wf-gauge-svg">
+                    <circle cx="60" cy="60" r="52" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="8" />
+                    <circle cx="60" cy="60" r="52" fill="none" stroke="var(--red)" strokeWidth="8"
+                      strokeDasharray="326.7" strokeDashoffset="26" strokeLinecap="round"
+                      className="wf-gauge-fill" transform="rotate(-90 60 60)" />
+                  </svg>
+                  <div className="wf-gauge-label">
+                    <span className="wf-gauge-score">92</span>
+                    <span className="wf-gauge-grade">F</span>
+                  </div>
+                </div>
+                <div className="wf-gauge-meta">
+                  <div className="wf-gauge-meta-row">
+                    <span>CVSS</span><span className="wf-gauge-val-red">9.8</span>
+                  </div>
+                  <div className="wf-gauge-meta-row">
+                    <span>EPSS</span><span className="wf-gauge-val-red">84.5%</span>
+                  </div>
+                  <div className="wf-gauge-meta-row">
+                    <span>KEV</span><span className="wf-gauge-val-red">YES</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* CVE Cards */}
+              <div className="wf-cve-list">
+                <div className="wf-cve-item wf-cve-crit wf-stagger-1">
+                  <div className="wf-cve-left">
+                    <span className="wf-cve-id">CVE-2020-28500</span>
+                    <span className="wf-cve-pkg">lodash@4.17.20</span>
+                  </div>
+                  <div className="wf-cve-score-badge">9.8</div>
+                </div>
+                <div className="wf-cve-item wf-cve-high wf-stagger-2">
+                  <div className="wf-cve-left">
+                    <span className="wf-cve-id">CVE-2021-23337</span>
+                    <span className="wf-cve-pkg">lodash@4.17.20</span>
+                  </div>
+                  <div className="wf-cve-score-badge wf-cve-score-high">7.2</div>
+                </div>
+              </div>
+
+              {/* PDF report */}
+              {scene === 7 && (
+                <div className="wf-report-bar wf-scene-enter">
+                  <div className="wf-report-icon">
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><polyline points="9 15 12 18 15 15"/>
+                    </svg>
+                  </div>
+                  <span className="wf-report-text">security-report.pdf</span>
+                  <span className="wf-report-status">Generated ✓</span>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* ── Scene 8: Completion ── */}
+        {scene === 8 && (
+          <div className="wf-complete wf-scene-enter">
+            <div className="wf-complete-check">
+              <svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="var(--green)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="20 6 9 17 4 12"/>
+              </svg>
+            </div>
+            <div className="wf-complete-title">Scan Complete</div>
+            <div className="wf-complete-sub">2 vulnerabilities identified • Report saved</div>
+            <div className="wf-complete-bar">
+              <div className="wf-complete-fill" />
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 /* ═══════════════════════════════════════
    LANDING
    ═══════════════════════════════════════ */
@@ -220,182 +572,101 @@ export default function LandingClient({ stats, recent }: Props) {
         <div className="hero-grid-bg" aria-hidden="true" />
         <div className="hero-noise" aria-hidden="true" />
 
-        <div className="hero-split">
-          {/* Left: Copy */}
-          <div className="hero-left">
-            <Reveal>
-              <div className="hero-pill">
-                <span className="hero-pill-dot" />
-                Tracking {(stats.nvd + stats.osv).toLocaleString()}+ CVEs live
+        {/* ── Top: Centered Copy ── */}
+        <div className="hero-copy-center">
+          <Reveal>
+            <div className="hero-pill">
+              <span className="hero-pill-dot" />
+              Tracking {(stats.nvd + stats.osv).toLocaleString()}+ CVEs live
+            </div>
+          </Reveal>
+          <Reveal>
+            <h1 className="hero-h1">
+              Know every risk in{' '}
+              <span className="hero-h1-accent">your dependency tree.</span>
+            </h1>
+          </Reveal>
+          <Reveal delay={1}>
+            <p className="hero-sub">
+              OsVault scans your npm and PyPI packages against NVD, OSV.dev,
+              EPSS, and CISA KEV — combining everything into one risk score
+              so you fix what actually matters.
+            </p>
+          </Reveal>
+          <Reveal delay={2}>
+            <div className="hero-ctas">
+              <a href="/checker" className="btn-primary" id="hero-scan-btn">
+                Scan your dependencies
+                <span className="btn-arrow">→</span>
+              </a>
+              <a href="#how-it-works" className="btn-ghost" id="hero-approach-btn">Watch how it works</a>
+            </div>
+          </Reveal>
+        </div>
+
+        {/* ── Video Screen ── */}
+        <Reveal delay={2}>
+          <div className="hero-screen-wrap">
+            {/* Ambient glow behind screen */}
+            <div className="hero-screen-glow" aria-hidden="true" />
+
+            {/* The "recorded video" screen shell */}
+            <div className="hero-screen-shell">
+              {/* Scanlines overlay */}
+              <div className="screen-scanlines" aria-hidden="true" />
+              {/* Screen vignette */}
+              <div className="screen-vignette" aria-hidden="true" />
+              {/* Film grain */}
+              <div className="screen-grain" aria-hidden="true" />
+
+              {/* Timestamp */}
+              <div className="screen-timestamp" aria-hidden="true">
+                2026-04-10 · 12:04:21 UTC
               </div>
-            </Reveal>
-            <Reveal>
-              <h1 className="hero-h1">
-                Know every risk in<br/>
-                <span className="hero-h1-accent">your dependency tree.</span>
-              </h1>
-            </Reveal>
-            <Reveal delay={1}>
-              <p className="hero-sub">
-                OsVault scans your npm and PyPI packages against NVD, OSV.dev,
-                EPSS, and CISA KEV — combining everything into one risk score
-                so you fix what actually matters.
-              </p>
-            </Reveal>
-            <Reveal delay={2}>
-              <div className="hero-ctas">
-                <a href="/checker" className="btn-primary" id="hero-scan-btn">
-                  Scan your dependencies
-                  <span className="btn-arrow">→</span>
-                </a>
-                <a href="#how-it-works" className="btn-ghost" id="hero-approach-btn">How it works</a>
+
+              {/* Corner — source label */}
+              <div className="screen-source-label" aria-hidden="true">
+                OSVAULT / SECURITY-SCAN-DEMO
               </div>
-            </Reveal>
-            <Reveal delay={2}>
-              <div className="hero-proof">
-                <div className="hero-proof-item">
-                  <span className="hero-proof-value">{(stats.nvd + stats.osv).toLocaleString()}</span>
-                  <span className="hero-proof-label">CVEs indexed</span>
-                </div>
-                <div className="hero-proof-divider" />
-                <div className="hero-proof-item">
-                  <span className="hero-proof-value">4</span>
-                  <span className="hero-proof-label">Intel sources</span>
-                </div>
-                <div className="hero-proof-divider" />
-                <div className="hero-proof-item">
-                  <span className="hero-proof-value">24h</span>
-                  <span className="hero-proof-label">Refresh cycle</span>
-                </div>
-              </div>
-            </Reveal>
+
+              {/* The actual demo */}
+              <MockVideoPlayer />
+            </div>
+
+            {/* Reflection / glow beneath */}
+            <div className="hero-screen-reflection" aria-hidden="true" />
           </div>
+        </Reveal>
 
-          {/* Right: Live Dependency Graph */}
-          <div className="hero-right">
-            <div className="hero-graph-wrapper">
-              {/* Ambient glow behind graph */}
-              <div className="graph-ambient" />
-
-              <svg className="hero-graph" viewBox="0 0 500 500" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <defs>
-                  <radialGradient id="centerGlow" cx="50%" cy="50%" r="50%">
-                    <stop offset="0%" stopColor="rgba(230,57,70,0.15)" />
-                    <stop offset="100%" stopColor="transparent" />
-                  </radialGradient>
-                  <linearGradient id="lineGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-                    <stop offset="0%" stopColor="rgba(230,57,70,0.25)" />
-                    <stop offset="100%" stopColor="rgba(255,255,255,0.04)" />
-                  </linearGradient>
-                  <linearGradient id="lineGradR" x1="100%" y1="0%" x2="0%" y2="0%">
-                    <stop offset="0%" stopColor="rgba(230,57,70,0.25)" />
-                    <stop offset="100%" stopColor="rgba(255,255,255,0.04)" />
-                  </linearGradient>
-                  <filter id="softGlow">
-                    <feGaussianBlur stdDeviation="4" result="blur" />
-                    <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
-                  </filter>
-                  <filter id="nodeGlow">
-                    <feGaussianBlur stdDeviation="8" result="blur" />
-                    <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
-                  </filter>
-                </defs>
-
-                {/* Center ambient */}
-                <circle cx="250" cy="250" r="120" fill="url(#centerGlow)" />
-
-                {/* Orbit rings */}
-                <circle cx="250" cy="250" r="90" stroke="rgba(230,57,70,0.06)" strokeWidth="0.8" fill="none" strokeDasharray="4 8" className="graph-orbit" />
-                <circle cx="250" cy="250" r="170" stroke="rgba(255,255,255,0.03)" strokeWidth="0.8" fill="none" className="graph-orbit-2" />
-
-                {/* Scan pulse */}
-                <circle className="graph-scan-ring" cx="250" cy="250" r="30" stroke="rgba(230,57,70,0.25)" strokeWidth="1" fill="none" />
-
-                {/* Curved connections — center to each node */}
-                {[
-                  "M250,250 C250,180 160,130 130,120",
-                  "M250,250 C300,200 360,110 390,100",
-                  "M250,250 C200,280 100,270 80,260",
-                  "M250,250 C300,280 400,280 420,270",
-                  "M250,250 C240,310 180,380 160,400",
-                  "M250,250 C280,320 350,390 370,400",
-                ].map((d, i) => (
-                  <path key={`c-${i}`} d={d} stroke="rgba(255,255,255,0.06)" strokeWidth="1" fill="none" className="graph-curve" style={{ animationDelay: `${i * 0.2}s` }} />
-                ))}
-
-                {/* Sub-connections from outer nodes */}
-                {[
-                  "M130,120 C110,90 70,70 50,60",
-                  "M130,120 C90,130 50,150 35,160",
-                  "M390,100 C410,70 440,50 460,45",
-                  "M390,100 C420,120 450,140 465,150",
-                  "M80,260 C50,280 30,320 25,340",
-                  "M420,270 C450,290 470,320 475,340",
-                  "M160,400 C140,430 120,450 110,460",
-                  "M370,400 C390,430 410,450 425,458",
-                ].map((d, i) => (
-                  <path key={`sc-${i}`} d={d} stroke="rgba(255,255,255,0.035)" strokeWidth="0.8" fill="none" className="graph-curve" style={{ animationDelay: `${0.8 + i * 0.1}s` }} />
-                ))}
-
-                {/* Data scan pulses */}
-                {[
-                  { path: "M250,250 C250,180 160,130 130,120", delay: 0 },
-                  { path: "M250,250 C300,200 360,110 390,100", delay: 1.5 },
-                  { path: "M250,250 C200,280 100,270 80,260", delay: 3 },
-                  { path: "M250,250 C300,280 400,280 420,270", delay: 4.5 },
-                ].map((p, i) => (
-                  <circle key={`pulse-${i}`} r="2.5" fill="var(--red)" filter="url(#softGlow)" opacity="0.8">
-                    <animateMotion dur="4s" repeatCount="indefinite" begin={`${p.delay}s`} path={p.path} />
-                  </circle>
-                ))}
-
-                {/* ── Center node ── */}
-                <g className="graph-center-group">
-                  <circle cx="250" cy="250" r="32" fill="rgba(230,57,70,0.04)" stroke="rgba(230,57,70,0.2)" strokeWidth="1" />
-                  <circle cx="250" cy="250" r="20" fill="rgba(230,57,70,0.08)" stroke="rgba(230,57,70,0.35)" strokeWidth="1" className="graph-inner-ring" />
-                  <circle cx="250" cy="250" r="6" fill="var(--red)" filter="url(#softGlow)" className="graph-center-dot" />
-                </g>
-
-                {/* ── Package nodes ── */}
-                {[
-                  { x:130, y:120, label:"express",      vuln:false },
-                  { x:390, y:100, label:"next",          vuln:true  },
-                  { x:80,  y:260, label:"urllib3",       vuln:false },
-                  { x:420, y:270, label:"jsonwebtoken",  vuln:true  },
-                  { x:160, y:400, label:"axios",         vuln:false },
-                  { x:370, y:400, label:"lodash",        vuln:false },
-                ].map((n, i) => (
-                  <g key={`pkg-${i}`} className={`graph-node ${n.vuln ? 'graph-node-vuln' : ''}`} style={{ animationDelay: `${0.4 + i * 0.15}s` }}>
-                    <circle cx={n.x} cy={n.y} r={n.vuln ? 18 : 14} fill={n.vuln ? "rgba(230,57,70,0.06)" : "rgba(255,255,255,0.02)"}
-                      stroke={n.vuln ? "rgba(230,57,70,0.4)" : "rgba(255,255,255,0.08)"} strokeWidth="1" />
-                    <circle cx={n.x} cy={n.y} r="3.5" fill={n.vuln ? "var(--red)" : "rgba(255,255,255,0.2)"} />
-                    <text x={n.x} y={n.y + (n.vuln ? 30 : 26)} textAnchor="middle"
-                      fill={n.vuln ? "rgba(230,57,70,0.7)" : "rgba(255,255,255,0.25)"}
-                      fontSize="9" fontFamily="'JetBrains Mono', monospace" fontWeight="500" letterSpacing="0.03em">{n.label}</text>
-                  </g>
-                ))}
-
-                {/* ── Sub-nodes (transitive deps) ── */}
-                {[
-                  { x:50,  y:60  },{ x:35,  y:160 },
-                  { x:460, y:45  },{ x:465, y:150 },
-                  { x:25,  y:340 },{ x:475, y:340 },
-                  { x:110, y:460 },{ x:425, y:458 },
-                ].map((n, i) => (
-                  <g key={`sub-${i}`} className="graph-sub" style={{ animationDelay: `${1.2 + i * 0.1}s` }}>
-                    <circle cx={n.x} cy={n.y} r="6" fill="rgba(255,255,255,0.015)" stroke="rgba(255,255,255,0.05)" strokeWidth="0.6" />
-                    <circle cx={n.x} cy={n.y} r="2" fill="rgba(255,255,255,0.1)" />
-                  </g>
-                ))}
-
-                {/* Center label */}
-                <text x="250" y="295" textAnchor="middle" fill="rgba(230,57,70,0.5)" fontSize="7" fontFamily="'JetBrains Mono', monospace" fontWeight="700" letterSpacing="0.15em">SCANNER</text>
-              </svg>
-
-
+        {/* ── Proof strip ── */}
+        <Reveal delay={3}>
+          <div className="hero-proof-strip">
+            <div className="hero-proof-item">
+              <span className="hero-proof-value">{(stats.nvd + stats.osv).toLocaleString()}</span>
+              <span className="hero-proof-label">CVEs indexed</span>
+            </div>
+            <div className="hero-proof-divider" />
+            <div className="hero-proof-item">
+              <span className="hero-proof-value">4</span>
+              <span className="hero-proof-label">Intel sources</span>
+            </div>
+            <div className="hero-proof-divider" />
+            <div className="hero-proof-item">
+              <span className="hero-proof-value">{stats.kev.toLocaleString()}</span>
+              <span className="hero-proof-label">KEV entries</span>
+            </div>
+            <div className="hero-proof-divider" />
+            <div className="hero-proof-item">
+              <span className="hero-proof-value">24h</span>
+              <span className="hero-proof-label">Refresh cycle</span>
+            </div>
+            <div className="hero-proof-divider" />
+            <div className="hero-proof-item">
+              <span className="hero-proof-value">100%</span>
+              <span className="hero-proof-label">Free & open</span>
             </div>
           </div>
-        </div>
+        </Reveal>
 
         <Ticker />
       </section>
