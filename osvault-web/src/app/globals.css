@@ -219,9 +219,11 @@ code, pre, .mono {
   display: flex;
   flex-direction: column;
   justify-content: center;
+  align-items: flex-start;
   padding: 140px 0 100px;
   position: relative;
   z-index: 2;
+  max-width: 55%;
 }
 
 .hero h1 {
@@ -252,6 +254,7 @@ code, pre, .mono {
   display: flex;
   gap: 16px;
   flex-wrap: wrap;
+  justify-content: flex-start;
 }
 
 .hero .btn-primary {
@@ -1394,6 +1397,7 @@ code, pre, .mono {
   .cap-grid { grid-template-columns: 1fr; }
   .stats-row { grid-template-columns: 1fr; }
   .hero h1 { font-size: clamp(32px, 8vw, 48px); }
+  .hero-content { max-width: 100%; }
   .navbar-right { gap: 10px; }
   .navbar-link { display: none; }
 }
