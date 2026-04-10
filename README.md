@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="osvault-web/public/workflow-demo.png" width="100%" alt="OsVault Software Interface">
+  <img src="docs/animated-header.svg" width="100%" alt="OsVault Animated Header">
   
   <br>
   

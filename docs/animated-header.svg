@@ -1,0 +1,120 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 200" width="100%">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#020617" />
+      <stop offset="100%" stop-color="#0F172A" />
+    </linearGradient>
+    <radialGradient id="glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#38BDF8" stop-opacity="0.2" />
+      <stop offset="100%" stop-color="#38BDF8" stop-opacity="0" />
+    </radialGradient>
+    <radialGradient id="glow2" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#10B981" stop-opacity="0.15" />
+      <stop offset="100%" stop-color="#10B981" stop-opacity="0" />
+    </radialGradient>
+    <style>
+      .text-scan {
+        fill: transparent;
+        stroke: #38BDF8;
+        stroke-width: 1.5;
+        stroke-dasharray: 600;
+        stroke-dashoffset: 600;
+        animation: draw 4s infinite ease-out;
+      }
+      .text-fill {
+        fill: #F8FAFC;
+        opacity: 0;
+        animation: fade 4s infinite ease-out;
+      }
+      .radar {
+        stroke: #10B981;
+        stroke-width: 1.5;
+        fill: transparent;
+        animation: ripple 3s infinite ease-out;
+      }
+      .radar-2 {
+        animation-delay: 1.5s;
+      }
+      .grid-line {
+        stroke: #1E293B;
+        stroke-width: 1;
+      }
+      .node {
+        fill: #38BDF8;
+        animation: pulse 2s infinite ease-in-out;
+      }
+      @keyframes draw {
+        0% { stroke-dashoffset: 600; }
+        40% { stroke-dashoffset: 0; }
+        100% { stroke-dashoffset: 0; }
+      }
+      @keyframes fade {
+        0%, 30% { opacity: 0; }
+        40%, 80% { opacity: 1; }
+        100% { opacity: 0; }
+      }
+      @keyframes ripple {
+        0% { r: 5; opacity: 1; }
+        100% { r: 80; opacity: 0; }
+      }
+      @keyframes pulse {
+        0%, 100% { r: 3; opacity: 0.5; }
+        50% { r: 5; opacity: 1; }
+      }
+      @keyframes scanline {
+        0% { transform: translateY(-50px); opacity: 0; }
+        10% { opacity: 0.5; }
+        90% { opacity: 0.5; }
+        100% { transform: translateY(250px); opacity: 0; }
+      }
+      .scanning-beam {
+        fill: url(#glow);
+        animation: scanline 3s infinite linear;
+      }
+    </style>
+  </defs>
+  
+  <rect width="100%" height="100%" fill="url(#bg)" rx="16" />
+  
+  <!-- Grid Background -->
+  <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+    <path d="M 40 0 L 0 0 0 40" fill="none" class="grid-line" />
+  </pattern>
+  <rect width="100%" height="100%" fill="url(#grid)" rx="16" />
+
+  <circle cx="400" cy="100" r="150" fill="url(#glow)" />
+  
+  <!-- Left nodes & radar -->
+  <circle cx="150" cy="100" r="80" fill="url(#glow2)" />
+  <circle cx="150" cy="100" class="radar" />
+  <circle cx="150" cy="100" class="radar radar-2" />
+  
+  <line x1="150" y1="100" x2="280" y2="100" stroke="#334155" stroke-width="2" stroke-dasharray="4 4" />
+  <circle cx="150" cy="100" class="node" />
+  <circle cx="280" cy="100" class="node" style="animation-delay: 0.5s;" />
+  <circle cx="215" cy="65" class="node" style="animation-delay: 1s;" />
+  <line x1="150" y1="100" x2="215" y2="65" stroke="#334155" stroke-width="1" />
+  <line x1="280" y1="100" x2="215" y2="65" stroke="#334155" stroke-width="1" />
+  
+  <!-- Right nodes & radar -->
+  <circle cx="650" cy="100" r="80" fill="url(#glow2)" />
+  <circle cx="650" cy="100" class="radar" />
+  <circle cx="650" cy="100" class="radar radar-2" />
+  
+  <line x1="650" y1="100" x2="520" y2="100" stroke="#334155" stroke-width="2" stroke-dasharray="4 4" />
+  <circle cx="650" cy="100" class="node" />
+  <circle cx="520" cy="100" class="node" style="animation-delay: 0.7s;" />
+  <circle cx="585" cy="135" class="node" style="animation-delay: 1.2s;" />
+  <line x1="650" y1="100" x2="585" y2="135" stroke="#334155" stroke-width="1" />
+  <line x1="520" y1="100" x2="585" y2="135" stroke="#334155" stroke-width="1" />
+  
+  <!-- Texts -->
+  <text x="400" y="115" font-family="monospace, sans-serif" font-size="64" font-weight="900" text-anchor="middle" class="text-scan">OsVault</text>
+  <text x="400" y="115" font-family="monospace, sans-serif" font-size="64" font-weight="900" text-anchor="middle" class="text-fill">OsVault</text>
+
+  <rect x="250" y="145" width="300" height="24" rx="12" fill="#0F172A" stroke="#334155" />
+  <text x="400" y="162" font-family="sans-serif" font-size="12" fill="#94A3B8" font-weight="600" text-anchor="middle" letter-spacing="3">VULNERABILITY INTELLIGENCE</text>
+
+  <!-- Scanning beam -->
+  <rect x="0" y="0" width="800" height="20" class="scanning-beam" />
+</svg>
