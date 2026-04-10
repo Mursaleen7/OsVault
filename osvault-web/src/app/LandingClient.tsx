@@ -216,86 +216,185 @@ export default function LandingClient({ stats, recent }: Props) {
 
       {/* ═══ HERO ═══ */}
       <section className="hero" id="hero">
-        <div className="hero-bg-graphic">
-          <svg className="hero-clean-shield" viewBox="0 0 800 800" fill="none" style={{ width: "100%", height: "100%" }}>
-            <defs>
-              <radialGradient id="vaultGlow" cx="50%" cy="50%" r="50%">
-                <stop offset="0%" stopColor="rgba(230, 57, 70, 0.15)" />
-                <stop offset="30%" stopColor="rgba(230, 57, 70, 0.05)" />
-                <stop offset="100%" stopColor="transparent" />
-              </radialGradient>
-              <linearGradient id="ringGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="rgba(255, 255, 255, 0.02)" />
-                <stop offset="50%" stopColor="rgba(255, 255, 255, 0.08)" />
-                <stop offset="100%" stopColor="transparent" />
-              </linearGradient>
-              <linearGradient id="ringGradientRed" x1="100%" y1="0%" x2="0%" y2="100%">
-                <stop offset="0%" stopColor="rgba(230, 57, 70, 0)" />
-                <stop offset="50%" stopColor="rgba(230, 57, 70, 0.2)" />
-                <stop offset="100%" stopColor="transparent" />
-              </linearGradient>
-            </defs>
+        <div className="hero-glow" aria-hidden="true" />
+        <div className="hero-grid-bg" aria-hidden="true" />
+        <div className="hero-noise" aria-hidden="true" />
 
-            {/* Base Glow */}
-            <circle cx="400" cy="400" r="380" fill="url(#vaultGlow)" />
+        <div className="hero-split">
+          {/* Left: Copy */}
+          <div className="hero-left">
+            <Reveal>
+              <div className="hero-pill">
+                <span className="hero-pill-dot" />
+                Tracking {(stats.nvd + stats.osv).toLocaleString()}+ CVEs live
+              </div>
+            </Reveal>
+            <Reveal>
+              <h1 className="hero-h1">
+                Know every risk in<br/>
+                <span className="hero-h1-accent">your dependency tree.</span>
+              </h1>
+            </Reveal>
+            <Reveal delay={1}>
+              <p className="hero-sub">
+                OsVault scans your npm and PyPI packages against NVD, OSV.dev,
+                EPSS, and CISA KEV — combining everything into one risk score
+                so you fix what actually matters.
+              </p>
+            </Reveal>
+            <Reveal delay={2}>
+              <div className="hero-ctas">
+                <a href="/checker" className="btn-primary" id="hero-scan-btn">
+                  Scan your dependencies
+                  <span className="btn-arrow">→</span>
+                </a>
+                <a href="#how-it-works" className="btn-ghost" id="hero-approach-btn">How it works</a>
+              </div>
+            </Reveal>
+            <Reveal delay={2}>
+              <div className="hero-proof">
+                <div className="hero-proof-item">
+                  <span className="hero-proof-value">{(stats.nvd + stats.osv).toLocaleString()}</span>
+                  <span className="hero-proof-label">CVEs indexed</span>
+                </div>
+                <div className="hero-proof-divider" />
+                <div className="hero-proof-item">
+                  <span className="hero-proof-value">4</span>
+                  <span className="hero-proof-label">Intel sources</span>
+                </div>
+                <div className="hero-proof-divider" />
+                <div className="hero-proof-item">
+                  <span className="hero-proof-value">24h</span>
+                  <span className="hero-proof-label">Refresh cycle</span>
+                </div>
+              </div>
+            </Reveal>
+          </div>
 
-            {/* Elegant Crosshairs */}
-            <g stroke="rgba(255, 255, 255, 0.03)" strokeWidth="1">
-              <line x1="400" y1="40" x2="400" y2="760" />
-              <line x1="40" y1="400" x2="760" y2="400" />
-              <circle cx="400" cy="400" r="320" strokeDasharray="2 8" fill="none" />
-            </g>
+          {/* Right: Live Dependency Graph */}
+          <div className="hero-right">
+            <div className="hero-graph-wrapper">
+              {/* Ambient glow behind graph */}
+              <div className="graph-ambient" />
 
-            {/* Outer Rings */}
-            <g className="vault-spin-slow" style={{ transformOrigin: '400px 400px' }}>
-              <circle cx="400" cy="400" r="320" stroke="url(#ringGradient)" strokeWidth="1" />
-              <circle cx="400" cy="400" r="320" stroke="rgba(255, 255, 255, 0.3)" strokeWidth="1.5" strokeDasharray="200 1810" strokeLinecap="round" />
-              <circle cx="400" cy="400" r="340" stroke="url(#ringGradientRed)" strokeWidth="1" strokeDasharray="2 12" />
-            </g>
+              <svg className="hero-graph" viewBox="0 0 500 500" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                  <radialGradient id="centerGlow" cx="50%" cy="50%" r="50%">
+                    <stop offset="0%" stopColor="rgba(230,57,70,0.15)" />
+                    <stop offset="100%" stopColor="transparent" />
+                  </radialGradient>
+                  <linearGradient id="lineGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" stopColor="rgba(230,57,70,0.25)" />
+                    <stop offset="100%" stopColor="rgba(255,255,255,0.04)" />
+                  </linearGradient>
+                  <linearGradient id="lineGradR" x1="100%" y1="0%" x2="0%" y2="0%">
+                    <stop offset="0%" stopColor="rgba(230,57,70,0.25)" />
+                    <stop offset="100%" stopColor="rgba(255,255,255,0.04)" />
+                  </linearGradient>
+                  <filter id="softGlow">
+                    <feGaussianBlur stdDeviation="4" result="blur" />
+                    <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
+                  </filter>
+                  <filter id="nodeGlow">
+                    <feGaussianBlur stdDeviation="8" result="blur" />
+                    <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
+                  </filter>
+                </defs>
 
-            {/* Middle Rings */}
-            <g className="vault-spin-slower-reverse" style={{ transformOrigin: '400px 400px' }}>
-              <circle cx="400" cy="400" r="220" stroke="url(#ringGradient)" strokeWidth="1" />
-              <circle cx="400" cy="400" r="220" stroke="var(--red)" strokeWidth="1.5" strokeDasharray="150 1232" strokeLinecap="round" />
-              <circle cx="400" cy="400" r="210" stroke="rgba(255, 255, 255, 0.05)" strokeWidth="4" strokeDasharray="1 8" />
-            </g>
+                {/* Center ambient */}
+                <circle cx="250" cy="250" r="120" fill="url(#centerGlow)" />
 
-            {/* Inner Rings */}
-            <g className="vault-spin-medium" style={{ transformOrigin: '400px 400px' }}>
-              <circle cx="400" cy="400" r="100" stroke="url(#ringGradientRed)" strokeWidth="1" />
-              <circle cx="400" cy="400" r="100" stroke="var(--white-pure)" strokeWidth="1.5" strokeDasharray="80 548" strokeLinecap="round" />
-            </g>
+                {/* Orbit rings */}
+                <circle cx="250" cy="250" r="90" stroke="rgba(230,57,70,0.06)" strokeWidth="0.8" fill="none" strokeDasharray="4 8" className="graph-orbit" />
+                <circle cx="250" cy="250" r="170" stroke="rgba(255,255,255,0.03)" strokeWidth="0.8" fill="none" className="graph-orbit-2" />
 
-            {/* Center Mechanism */}
-            <g className="vault-pulse" style={{ transformOrigin: '400px 400px' }}>
-              <path d="M400,370 L430,400 L400,430 L370,400 Z" fill="none" stroke="rgba(230, 57, 70, 0.4)" strokeWidth="1" />
-              <path d="M400,385 L415,400 L400,415 L385,400 Z" fill="var(--red)" opacity="0.6" />
-              <circle cx="400" cy="400" r="4" fill="var(--white-pure)" />
-            </g>
-          </svg>
-        </div>
+                {/* Scan pulse */}
+                <circle className="graph-scan-ring" cx="250" cy="250" r="30" stroke="rgba(230,57,70,0.25)" strokeWidth="1" fill="none" />
 
-        <div className="container hero-content">
-          <Reveal>
-            <h1>
-              Vulnerability intelligence<br/>
-              <span className="text-glow">for every dependency.</span>
-            </h1>
-          </Reveal>
-          
-          <Reveal delay={1}>
-            <p className="hero-sub">
-              Real-time CVE tracking with CVSS scores, EPSS exploit probability,
-              and CISA KEV data — for npm and PyPI packages.
-            </p>
-          </Reveal>
-          
-          <Reveal delay={2}>
-            <div className="hero-ctas">
-              <a href="/checker" className="btn-primary" id="hero-scan-btn">Scan Dependencies</a>
-              <a href="#how-it-works" className="btn-outline" id="hero-approach-btn">Our Approach</a>
+                {/* Curved connections — center to each node */}
+                {[
+                  "M250,250 C250,180 160,130 130,120",
+                  "M250,250 C300,200 360,110 390,100",
+                  "M250,250 C200,280 100,270 80,260",
+                  "M250,250 C300,280 400,280 420,270",
+                  "M250,250 C240,310 180,380 160,400",
+                  "M250,250 C280,320 350,390 370,400",
+                ].map((d, i) => (
+                  <path key={`c-${i}`} d={d} stroke="rgba(255,255,255,0.06)" strokeWidth="1" fill="none" className="graph-curve" style={{ animationDelay: `${i * 0.2}s` }} />
+                ))}
+
+                {/* Sub-connections from outer nodes */}
+                {[
+                  "M130,120 C110,90 70,70 50,60",
+                  "M130,120 C90,130 50,150 35,160",
+                  "M390,100 C410,70 440,50 460,45",
+                  "M390,100 C420,120 450,140 465,150",
+                  "M80,260 C50,280 30,320 25,340",
+                  "M420,270 C450,290 470,320 475,340",
+                  "M160,400 C140,430 120,450 110,460",
+                  "M370,400 C390,430 410,450 425,458",
+                ].map((d, i) => (
+                  <path key={`sc-${i}`} d={d} stroke="rgba(255,255,255,0.035)" strokeWidth="0.8" fill="none" className="graph-curve" style={{ animationDelay: `${0.8 + i * 0.1}s` }} />
+                ))}
+
+                {/* Data scan pulses */}
+                {[
+                  { path: "M250,250 C250,180 160,130 130,120", delay: 0 },
+                  { path: "M250,250 C300,200 360,110 390,100", delay: 1.5 },
+                  { path: "M250,250 C200,280 100,270 80,260", delay: 3 },
+                  { path: "M250,250 C300,280 400,280 420,270", delay: 4.5 },
+                ].map((p, i) => (
+                  <circle key={`pulse-${i}`} r="2.5" fill="var(--red)" filter="url(#softGlow)" opacity="0.8">
+                    <animateMotion dur="4s" repeatCount="indefinite" begin={`${p.delay}s`} path={p.path} />
+                  </circle>
+                ))}
+
+                {/* ── Center node ── */}
+                <g className="graph-center-group">
+                  <circle cx="250" cy="250" r="32" fill="rgba(230,57,70,0.04)" stroke="rgba(230,57,70,0.2)" strokeWidth="1" />
+                  <circle cx="250" cy="250" r="20" fill="rgba(230,57,70,0.08)" stroke="rgba(230,57,70,0.35)" strokeWidth="1" className="graph-inner-ring" />
+                  <circle cx="250" cy="250" r="6" fill="var(--red)" filter="url(#softGlow)" className="graph-center-dot" />
+                </g>
+
+                {/* ── Package nodes ── */}
+                {[
+                  { x:130, y:120, label:"express",      vuln:false },
+                  { x:390, y:100, label:"next",          vuln:true  },
+                  { x:80,  y:260, label:"urllib3",       vuln:false },
+                  { x:420, y:270, label:"jsonwebtoken",  vuln:true  },
+                  { x:160, y:400, label:"axios",         vuln:false },
+                  { x:370, y:400, label:"lodash",        vuln:false },
+                ].map((n, i) => (
+                  <g key={`pkg-${i}`} className={`graph-node ${n.vuln ? 'graph-node-vuln' : ''}`} style={{ animationDelay: `${0.4 + i * 0.15}s` }}>
+                    <circle cx={n.x} cy={n.y} r={n.vuln ? 18 : 14} fill={n.vuln ? "rgba(230,57,70,0.06)" : "rgba(255,255,255,0.02)"}
+                      stroke={n.vuln ? "rgba(230,57,70,0.4)" : "rgba(255,255,255,0.08)"} strokeWidth="1" />
+                    <circle cx={n.x} cy={n.y} r="3.5" fill={n.vuln ? "var(--red)" : "rgba(255,255,255,0.2)"} />
+                    <text x={n.x} y={n.y + (n.vuln ? 30 : 26)} textAnchor="middle"
+                      fill={n.vuln ? "rgba(230,57,70,0.7)" : "rgba(255,255,255,0.25)"}
+                      fontSize="9" fontFamily="'JetBrains Mono', monospace" fontWeight="500" letterSpacing="0.03em">{n.label}</text>
+                  </g>
+                ))}
+
+                {/* ── Sub-nodes (transitive deps) ── */}
+                {[
+                  { x:50,  y:60  },{ x:35,  y:160 },
+                  { x:460, y:45  },{ x:465, y:150 },
+                  { x:25,  y:340 },{ x:475, y:340 },
+                  { x:110, y:460 },{ x:425, y:458 },
+                ].map((n, i) => (
+                  <g key={`sub-${i}`} className="graph-sub" style={{ animationDelay: `${1.2 + i * 0.1}s` }}>
+                    <circle cx={n.x} cy={n.y} r="6" fill="rgba(255,255,255,0.015)" stroke="rgba(255,255,255,0.05)" strokeWidth="0.6" />
+                    <circle cx={n.x} cy={n.y} r="2" fill="rgba(255,255,255,0.1)" />
+                  </g>
+                ))}
+
+                {/* Center label */}
+                <text x="250" y="295" textAnchor="middle" fill="rgba(230,57,70,0.5)" fontSize="7" fontFamily="'JetBrains Mono', monospace" fontWeight="700" letterSpacing="0.15em">SCANNER</text>
+              </svg>
+
+
             </div>
-          </Reveal>
+          </div>
         </div>
 
         <Ticker />
