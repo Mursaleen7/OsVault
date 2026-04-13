@@ -53,36 +53,65 @@ export async function generatePdf(result: CheckResult, email: string) {
       CRITICAL: "#dc2626", HIGH: "#ea580c", MEDIUM: "#ca8a04", LOW: "#16a34a",
     };
 
-    for (const v of result.vulns) {
-      if (y > 760) { doc.addPage(); y = 48; }
+    // Group vulnerabilities by package
+    const grouped = result.vulns.reduce((acc, v) => {
+      const cleanVer = v.version.replace(/^==?/, "");
+      const key = `${v.package} (v${cleanVer})`;
+      if (!acc[key]) acc[key] = [];
+      acc[key].push(v);
+      return acc;
+    }, {} as Record<string, typeof result.vulns>);
 
-      const id = v.cve_id ?? v.osv_id ?? "—";
-      const sev = v.cvss_severity ?? "—";
-      const color = SEVERITY_COLOR[sev] ?? "#111111";
+    for (const [pkgName, vulns] of Object.entries(grouped)) {
+      if (y > 700) { doc.addPage(); y = 48; }
 
-      doc.setFontSize(11);
-      doc.setTextColor(color);
-      doc.text(`[${sev}]`, 48, y);
-      doc.setTextColor("#111111");
-      doc.text(`${v.package}@${v.version}  —  ${id}  —  CVSS: ${v.cvss_score ?? "N/A"}  Risk: ${v.combined_risk_score ?? "N/A"}`, 110, y);
-      y += 16;
+      // Package Header
+      doc.setFont("helvetica", "bold");
+      line(`Package: ${pkgName}`, 13, "#111827");
+      doc.setFont("helvetica", "normal");
+      y += 4;
 
-      if (v.summary) {
-        const wrapped = doc.splitTextToSize(`  ${v.summary}`, W - 96);
-        doc.setFontSize(9);
-        doc.setTextColor("#6b7280");
-        doc.text(wrapped, 48, y);
-        y += wrapped.length * 13;
+      for (const v of vulns) {
+        if (y > 760) { doc.addPage(); y = 48; }
+
+        const id = v.cve_id ?? v.osv_id ?? "Unknown ID";
+        const sev = v.cvss_severity ?? "UNKNOWN";
+        const color = SEVERITY_COLOR[sev] ?? "#6b7280";
+
+        doc.setFontSize(11);
+        doc.setTextColor(color);
+        doc.text(`[${sev}]`, 48, y);
+        doc.setTextColor("#111111");
+        
+        let riskLabel = "";
+        if (v.combined_risk_score !== null) {
+          riskLabel = ` | OsVault Risk: ${v.combined_risk_score}`;
+        }
+
+        doc.text(`${id}${riskLabel}`, 120, y);
+        y += 16;
+
+        if (v.summary) {
+          const wrapped = doc.splitTextToSize(`Summary: ${v.summary}`, W - 96);
+          doc.setFontSize(9);
+          doc.setTextColor("#4b5563");
+          doc.text(wrapped, 48, y);
+          y += wrapped.length * 13;
+        }
+
+        if (v.affected_versions?.length) {
+          doc.setFontSize(9);
+          doc.setTextColor("#16a34a");
+          const fixedVersion = v.affected_versions[v.affected_versions.length - 1];
+          doc.text(`Remediation: Upgrade to v${fixedVersion} or later`, 48, y);
+          y += 13;
+        }
+
+        y += 8;
       }
-
-      if (v.affected_versions?.length) {
-        doc.setFontSize(9);
-        doc.setTextColor("#6b7280");
-        doc.text(`  Affected versions: ${v.affected_versions.slice(0, 6).join(", ")}`, 48, y);
-        y += 13;
-      }
-
-      y += 6;
+      
+      y += 8; // Extra padding between packages
+      rule();
     }
   }
 

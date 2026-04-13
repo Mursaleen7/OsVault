@@ -68,12 +68,18 @@ async fn main() -> Result<()> {
             row.epss_score      = Some(epss_score);
             row.epss_percentile = Some(epss_pct);
         }
-        row.in_kev              = kev_set.contains(&row.cve_id);
-        row.combined_risk_score = Some(score::compute_risk_score(
+        row.in_kev = kev_set.contains(&row.cve_id);
+
+        // Use the v2 engine to get score + maturity tier + confidence band
+        let risk = score::compute_risk_result(
             row.cvss_score,
+            row.cvss_vector.as_deref(),
             row.epss_score,
             row.in_kev,
-        ));
+        );
+        row.combined_risk_score = Some(risk.score);
+        row.exploit_maturity    = Some(risk.maturity.as_str().to_string());
+        row.risk_confidence     = Some(risk.confidence.as_str().to_string());
     }
 
     info!("Upserting {} NVD records...", nvd_rows.len());

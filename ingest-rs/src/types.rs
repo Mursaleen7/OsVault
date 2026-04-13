@@ -17,6 +17,9 @@ pub struct NvdRow {
     pub epss_percentile:     Option<f64>,
     pub in_kev:              bool,
     pub combined_risk_score: Option<f64>,
+    pub exploit_maturity:    Option<String>,   // UNPROVEN | POC | FUNCTIONAL | WEAPONIZED
+    pub risk_confidence:     Option<String>,    // LOW | MEDIUM | HIGH
+    pub has_fix:             bool,
     pub source:              String,
 }
 

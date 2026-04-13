@@ -117,6 +117,9 @@ pub fn parse_nvd_item(wrapper: &NvdVulnWrapper) -> Option<crate::types::NvdRow> 
         epss_percentile:     None,
         in_kev:              false,
         combined_risk_score: None,
+        exploit_maturity:    None,
+        risk_confidence:     None,
+        has_fix:             false,
         source: "nvd".to_string(),
     })
 }

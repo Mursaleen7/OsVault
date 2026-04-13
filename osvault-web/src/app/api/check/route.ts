@@ -59,16 +59,100 @@ function bareVersion(v: string): string {
   return v.replace(/^[\^~>=<]+/, "").trim().split(" ")[0];
 }
 
-/** Compute A–F grade from vuln counts */
-function computeGrade(total: number, critical: number, high: number, medium: number): { grade: CheckResult["grade"]; score: number } {
-  if (total === 0) return { grade: "A", score: 100 };
-  const penalty = critical * 25 + high * 10 + medium * 3;
-  const score = Math.max(0, 100 - penalty);
-  const grade =
+/** 
+ * Semantic Version Chunk Comparator
+ * Splits strings into numeric/aphanumeric chunks and evaluates e.g. 5.3 vs 5.4.1
+ */
+function compareVersions(a: string, b: string): number {
+  if (a === b) return 0;
+  const re = /[a-zA-Z0-9]+/g;
+  const chunkA = a.match(re) || [];
+  const chunkB = b.match(re) || [];
+
+  const maxLen = Math.max(chunkA.length, chunkB.length);
+  for (let i = 0; i < maxLen; i++) {
+    const pA = chunkA[i];
+    const pB = chunkB[i];
+    
+    if (pA === pB) continue;
+    if (pA === undefined) return -1;
+    if (pB === undefined) return 1;
+
+    const numA = parseInt(pA, 10);
+    const numB = parseInt(pB, 10);
+
+    const isNumA = !isNaN(numA);
+    const isNumB = !isNaN(numB);
+
+    if (isNumA && isNumB) {
+      if (numA !== numB) return numA > numB ? 1 : -1;
+    } else if (isNumA && !isNumB) {
+      return 1;
+    } else if (!isNumA && isNumB) {
+      return -1;
+    } else {
+      return pA.localeCompare(pB);
+    }
+  }
+  return 0;
+}
+
+/**
+ * Checks if a version falls within any of the pairs of [introduced, fixed) boundaries.
+ */
+function isVersionVulnerable(currentVer: string, bounds: string[]): boolean {
+  if (!bounds || bounds.length === 0) return true; // Generic vulnerablity if no bounds
+
+  let vulnerable = false;
+  let i = 0;
+  while (i < bounds.length) {
+    const introduced = bounds[i];
+    const fixed = i + 1 < bounds.length ? bounds[i+1] : null;
+
+    if (compareVersions(currentVer, introduced) >= 0) {
+      if (!fixed || compareVersions(currentVer, fixed) < 0) {
+         vulnerable = true;
+         break;
+      }
+    }
+    i += 2;
+  }
+  return vulnerable;
+}
+
+/** Compute A–F grade from intelligent risk scores, not raw severity counts.
+ *
+ * Uses composite: 60% max-risk (worst case matters) + 40% average (breadth of exposure).
+ * This ensures grades reflect the actual engine intelligence rather than
+ * a disconnected penalty formula.
+ */
+function computeGrade(vulns: VulnMatch[]): { grade: CheckResult["grade"]; score: number } {
+  if (vulns.length === 0) return { grade: "A", score: 100 };
+
+  // Generate an intelligent fallback for unmapped vulnerabilities to prevent falling open to 100
+  const SEVERITY_FALLBACK: Record<string, number> = {
+    CRITICAL: 90, HIGH: 70, MEDIUM: 40, LOW: 20
+  };
+
+  const riskScores = vulns.map(v => {
+    if (v.combined_risk_score !== null) return v.combined_risk_score;
+    // Fallback securely so we NEVER generate A-grades for vulnerable packages
+    return SEVERITY_FALLBACK[v.cvss_severity?.toUpperCase() || ""] ?? 50; 
+  });
+  
+  const maxRisk = Math.max(...riskScores);
+  const avgRisk = riskScores.reduce((s, r) => s + r, 0) / riskScores.length;
+
+  // Composite: 60% worst-case + 40% average breadth
+  const composite = 0.6 * maxRisk + 0.4 * avgRisk;
+  const score = Math.max(0, Math.round(100 - composite));
+
+  const grade: CheckResult["grade"] =
     score >= 90 ? "A" :
     score >= 75 ? "B" :
     score >= 55 ? "C" :
     score >= 35 ? "D" : "F";
+
   return { grade, score };
 }
 
@@ -105,18 +189,16 @@ export async function POST(req: NextRequest) {
 
   const vulnRows: VulnMatch[] = [];
 
-  // Fetch all OSV vulns for these ecosystems in one query
-  const ecosystems = [
-    ...(npmNames.length  ? ["npm"]  : []),
-    ...(pypiNames.length ? ["PyPI"] : []),
-  ];
+  // Fetch OSV vulns across all monitored ecosystems, making the API completely ecosystem agnostic
+  const ecosystems = ["npm", "PyPI"];
 
   if (ecosystems.length > 0) {
     const { data } = await supabase
       .from("vulnerabilities")
       .select("osv_id, cve_id, summary, cvss_score, cvss_severity, combined_risk_score, affected_packages, ecosystem")
       .eq("source", "osv")
-      .in("ecosystem", ecosystems);
+      .in("ecosystem", ecosystems)
+      .limit(500000);
 
     const rows = data ?? [];
 
@@ -127,9 +209,10 @@ export async function POST(req: NextRequest) {
           typeof row.affected_packages === "string"
             ? JSON.parse(row.affected_packages)
             : row.affected_packages;
+            
+        // Removed `p.ecosystem === pkg.ecosystem` check to support text payload fallbacks seamlessly
         return pkgs.some(
-          (p) => p.name.toLowerCase() === pkg.name.toLowerCase() &&
-                 p.ecosystem?.toLowerCase() === pkg.ecosystem.toLowerCase()
+          (p) => p.name.toLowerCase() === pkg.name.toLowerCase()
         );
       });
 
@@ -143,6 +226,11 @@ export async function POST(req: NextRequest) {
           .filter(p => p.name.toLowerCase() === pkg.name.toLowerCase())
           .flatMap(p => p.versions ?? [])
           .filter(Boolean);
+
+        const currentBare = bareVersion(pkg.version);
+        if (!isVersionVulnerable(currentBare, affectedVersions)) {
+          continue; // Skips this row! Secure version matching!
+        }
 
         vulnRows.push({
           package:             pkg.name,
@@ -162,7 +250,7 @@ export async function POST(req: NextRequest) {
   const critical = vulnRows.filter(v => v.cvss_severity === "CRITICAL").length;
   const high     = vulnRows.filter(v => v.cvss_severity === "HIGH").length;
   const medium   = vulnRows.filter(v => v.cvss_severity === "MEDIUM").length;
-  const { grade, score } = computeGrade(vulnRows.length, critical, high, medium);
+  const { grade, score } = computeGrade(vulnRows);
 
   const result: CheckResult = {
     grade,

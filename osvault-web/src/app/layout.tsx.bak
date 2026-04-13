@@ -9,7 +9,14 @@ export const metadata = {
     description: "Know every risk in your dependency tree.",
     url: "https://os-vault-kappa.vercel.app",
     type: "website",
-    images: ["https://os-vault-kappa.vercel.app/og-image.png"],
+    images: [
+      {
+        url: "https://os-vault-kappa.vercel.app/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "OS-Vault Kappa",
+      },
+    ],
   },
 };
 
