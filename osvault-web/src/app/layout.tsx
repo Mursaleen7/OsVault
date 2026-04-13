@@ -4,6 +4,20 @@ export const metadata = {
   title: { default: "OsVault — Open Source Vulnerability Intelligence", template: "%s | OsVault" },
   description: "Real-time CVE tracking, CVSS scores, EPSS exploit probability, and CISA KEV data for npm and PyPI packages.",
   metadataBase: new URL("https://os-vault-kappa.vercel.app"),
+  openGraph: {
+    title: "OS-Vault Kappa",
+    description: "Know every risk in your dependency tree.",
+    url: "https://os-vault-kappa.vercel.app",
+    type: "website",
+    images: [
+      {
+        url: "https://os-vault-kappa.vercel.app/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "OS-Vault Kappa",
+      },
+    ],
+  },
 };
 
 function Nav() {
