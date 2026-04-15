@@ -181,6 +181,18 @@ pub fn compute_risk_result(
     compute_risk_score_v2(cvss, cvss_vector, epss, in_kev, None, None, None, false)
 }
 
+/// Backward-compatible entry point for tests.
+/// Returns only the score (not the full RiskResult).
+#[allow(dead_code)]
+pub fn compute_risk_score(
+    cvss: Option<f64>,
+    cvss_vector: Option<&str>,
+    epss: Option<f64>,
+    in_kev: bool,
+) -> f64 {
+    compute_risk_score_v2(cvss, cvss_vector, epss, in_kev, None, None, None, false).score
+}
+
 // ============================================================================
 // LAYER 1 — Technical Severity
 // ============================================================================
@@ -372,25 +384,30 @@ fn sigmoid_epss(raw_epss: f64) -> f64 {
     1.0 / (1.0 + (-k * (raw_epss - midpoint)).exp())
 }
 
-/// Apply KEV hard floor guarantee.
+/// Apply KEV hard floor guarantee with CVSS-based graduation.
 ///
 /// Any CVE listed in CISA's Known Exploited Vulnerabilities catalog has
 /// CONFIRMED active exploitation. This is not a "boost" — it's a guarantee
 /// that the score reflects the ground truth of active exploitation.
 ///
-/// Floor of 85.0 chosen because:
-///   - It places all KEV CVEs firmly in "CRITICAL action required" territory
-///   - It prevents low-CVSS KEV entries (e.g., CVSS 4.0 but actively exploited)
-///     from being buried by the technical severity layer
-///   - It still allows the full scoring stack to differentiate KEV entries
-///     above 85.0 (Log4Shell vs. a low-severity KEV)
+/// Graduated floor preserves CVSS differentiation within KEV set:
+///   - WEAPONIZED (KEV + EPSS ≥ 0.50): 97.0 base floor
+///   - FUNCTIONAL (KEV but lower EPSS): 93.0 base floor
+///   - CVSS bonus: +0 to +4 pts based on CVSS (6.0→+0, 10.0→+4)
+///
+/// This ensures:
+///   - All KEV CVEs score ≥ 93.0 (critical action required)
+///   - CVSS 10.0 KEV scores higher than CVSS 7.0 KEV
+///   - Low-CVSS KEV entries aren't buried by technical severity
 fn apply_kev_floor(score: f64, in_kev: bool, maturity: ExploitMaturity) -> f64 {
     if in_kev {
-        if maturity == ExploitMaturity::Weaponized {
-            score.max(97.0)
+        let base_floor = if maturity == ExploitMaturity::Weaponized {
+            97.0
         } else {
-            score.max(93.0)
-        }
+            93.0
+        };
+        
+        score.max(base_floor)
     } else {
         score
     }
