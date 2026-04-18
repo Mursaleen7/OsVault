@@ -1,0 +1,12 @@
+{
+  "buildCommand": "cd osvault-web && npm run build",
+  "outputDirectory": "osvault-web/.next",
+  "installCommand": "cd osvault-web && npm install",
+  "framework": "nextjs",
+  "crons": [
+    {
+      "path": "/api/cron/smart-indexing",
+      "schedule": "0 2 * * *"
+    }
+  ]
+}
