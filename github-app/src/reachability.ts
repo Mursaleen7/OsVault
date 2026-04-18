@@ -22,6 +22,7 @@
  */
 
 import type { Octokit } from "@octokit/core";
+import { buildGoImportPatterns, buildJavaImportPatterns, buildRustImportPatterns } from "./polyglot-patterns";
 import * as tar from "tar-stream";
 import gunzip from "gunzip-maybe";
 import { Readable } from "stream";
@@ -57,6 +58,10 @@ const SOURCE_EXTENSIONS = new Set([
   ".vue",
   ".svelte",
   ".py",       // Python ecosystem support
+  ".go",       // Go ecosystem support
+  ".java",     // Java ecosystem support
+  ".kt",       // Kotlin (JVM) support
+  ".rs",       // Rust ecosystem support
 ]);
 
 /** Directories inside the tarball we skip entirely. */
@@ -73,6 +78,9 @@ const SKIP_DIRS = [
   "vendor/",
   "coverage/",
   ".cache/",
+  "target/",        // Rust build output
+  ".gradle/",       // Gradle caches
+  ".mvn/",          // Maven wrapper cache
 ];
 
 /** Maximum tarball size we will download (200 MB). */
@@ -120,6 +128,11 @@ function buildImportPatterns(pkgName: string): RegExp[] {
     new RegExp(`^\\s*import\\s+${escaped}\\b`, "m"),
     // Python: from pkg import ...
     new RegExp(`^\\s*from\\s+${escaped}\\b`, "m"),
+  
+    // ── Go / Java / Rust ────────────────────────────────────────────
+    ...buildGoImportPatterns(escaped),
+    ...buildJavaImportPatterns(escaped),
+    ...buildRustImportPatterns(escaped),
   ];
 }
 

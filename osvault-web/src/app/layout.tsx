@@ -13,7 +13,18 @@ export const metadata = {
   },
 };
 
-function Nav() {
+import {
+  ClerkProvider,
+  SignInButton,
+  UserButton,
+  OrganizationSwitcher,
+} from "@clerk/nextjs";
+import { auth } from "@clerk/nextjs/server";
+import { dark } from "@clerk/themes";
+
+async function Nav() {
+  const { userId } = await auth();
+
   return (
     <nav className="navbar" id="navbar">
       <div className="navbar-inner">
@@ -28,9 +39,33 @@ function Nav() {
           OsVault
         </a>
         <div className="navbar-right">
-          <a href="/checker" className="navbar-link" id="nav-checker">Checker</a>
-          <a href="/checker" className="btn-primary" id="nav-scan-btn">
-            Scan Dependencies
+          <a href="/checker" className="navbar-link" id="nav-checker">Scanner</a>
+          <a href="/dashboard" className="navbar-link" id="nav-dashboard">Dashboard</a>
+          <a href="/pricing" className="navbar-link" id="nav-pricing">Pricing</a>
+          <a href="/trust" className="navbar-link" id="nav-trust">Trust</a>
+          <a href="/blog" className="navbar-link" id="nav-blog">Blog</a>
+          
+          {/* Clerk Auth UI */}
+          {!userId ? (
+            <SignInButton mode="modal"><button className="btn-outline" style={{ fontSize: 13, padding: "7px 18px", cursor: "pointer" }}>Sign In</button></SignInButton>
+          ) : (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <OrganizationSwitcher 
+                hidePersonal={true}
+                appearance={{ elements: { rootBox: { display: 'flex', justifyContent: 'center', alignItems: 'center' } } }}
+              />
+              <UserButton />
+            </div>
+          )}
+
+          <a
+            href="https://github.com/apps/osvault-security"
+            className="btn-primary"
+            id="nav-install-btn"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Install GitHub App
           </a>
         </div>
       </div>
@@ -54,17 +89,26 @@ function Footer() {
           <div className="footer-col">
             <h4>Product</h4>
             <a href="/checker">Dependency Scanner</a>
-            <a href="/">CVE Browser</a>
+            <a href="/dashboard">Dashboard</a>
+            <a href="/pricing">Pricing</a>
+            <a href="https://github.com/apps/osvault-security" target="_blank" rel="noopener noreferrer">GitHub App</a>
           </div>
           <div className="footer-col">
-            <h4>Data Sources</h4>
+            <h4>Platform</h4>
+            <a href="/trust">Trust Center</a>
             <a href="https://nvd.nist.gov" target="_blank" rel="noopener noreferrer">NVD</a>
             <a href="https://osv.dev" target="_blank" rel="noopener noreferrer">OSV.dev</a>
             <a href="https://www.first.org/epss/" target="_blank" rel="noopener noreferrer">FIRST EPSS</a>
           </div>
           <div className="footer-col">
+            <h4>Company</h4>
+            <a href="https://github.com/Mursaleen7/OsVault" target="_blank" rel="noopener noreferrer">GitHub</a>
+            <a href="mailto:security@osvault.dev">Contact</a>
+          </div>
+          <div className="footer-col">
             <h4>Legal</h4>
             <a href="#">Privacy Policy</a>
+            <a href="#">Terms of Service</a>
           </div>
         </div>
         <div className="footer-bottom">
@@ -78,12 +122,14 @@ function Footer() {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
-      <body>
-        <Nav />
-        {children}
-        <Footer />
-      </body>
-    </html>
+    <ClerkProvider appearance={{ baseTheme: dark, variables: { colorPrimary: '#E63946' } }}>
+      <html lang="en">
+        <body>
+          <Nav />
+          {children}
+          <Footer />
+        </body>
+      </html>
+    </ClerkProvider>
   );
 }

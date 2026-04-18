@@ -595,11 +595,18 @@ export default function LandingClient({ stats, recent }: Props) {
           </Reveal>
           <Reveal delay={2}>
             <div className="hero-ctas">
-              <a href="/checker" className="btn-primary" id="hero-scan-btn">
-                Scan your dependencies
+              <a
+                href="https://github.com/apps/osvault-security"
+                className="btn-primary"
+                id="hero-install-btn"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Install GitHub App
                 <span className="btn-arrow">→</span>
               </a>
-              <a href="#how-it-works" className="btn-ghost" id="hero-approach-btn">Watch how it works</a>
+              <a href="/checker" className="btn-ghost" id="hero-scan-btn">Scan dependencies free</a>
+              <a href="/pricing" className="btn-ghost" id="hero-pricing-btn">View pricing</a>
             </div>
           </Reveal>
         </div>
@@ -663,7 +670,19 @@ export default function LandingClient({ stats, recent }: Props) {
             <div className="hero-proof-divider" />
             <div className="hero-proof-item">
               <span className="hero-proof-value">100%</span>
-              <span className="hero-proof-label">Free & open</span>
+              <span className="hero-proof-label">Free tier</span>
+            </div>
+          </div>
+        </Reveal>
+
+        {/* ── Trusted By Strip ── */}
+        <Reveal delay={3}>
+          <div className="hero-trusted-strip">
+            <span className="hero-trusted-label">TRUSTED BY TEAMS AT</span>
+            <div className="hero-trusted-logos">
+              {["Acme Corp", "TechStart", "CloudBase", "DataFlow", "SecureOps"].map((name) => (
+                <span key={name} className="hero-trusted-logo">{name}</span>
+              ))}
             </div>
           </div>
         </Reveal>
@@ -1058,14 +1077,26 @@ export default function LandingClient({ stats, recent }: Props) {
           <Reveal><h2 className="section-headline">Start scanning today.</h2></Reveal>
           <Reveal>
             <p className="section-subtext" style={{ margin: "0 auto", textAlign: "center" }}>
-              Paste your package.json or requirements.txt and get a full security report — completely free.
+              Install the GitHub App to automatically scan every PR, or paste your dependency file for an instant report — completely free.
             </p>
           </Reveal>
           <Reveal>
-            <div className="waitlist-form">
-              <a href="/checker" className="waitlist-submit" id="cta-scan-btn"
-                style={{ display: "block", textAlign: "center", textDecoration: "none" }}>
-                SCAN DEPENDENCIES →
+            <div className="waitlist-form" style={{ display: "flex", gap: 14, justifyContent: "center", flexWrap: "wrap" }}>
+              <a
+                href="https://github.com/apps/osvault-security"
+                className="waitlist-submit"
+                id="cta-install-btn"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ display: "inline-block", textAlign: "center", textDecoration: "none" }}
+              >
+                INSTALL GITHUB APP →
+              </a>
+              <a href="/checker" className="btn-outline"
+                id="cta-scan-btn"
+                style={{ padding: "14px 28px", fontSize: 14, color: "var(--white-pure)", borderColor: "rgba(255,255,255,0.15)" }}
+              >
+                SCAN DEPENDENCIES
               </a>
             </div>
           </Reveal>
