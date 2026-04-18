@@ -2,6 +2,7 @@
   "name": "osvault-web",
   "version": "0.1.0",
   "private": true,
+  "description": "OsVault web application - testing reachability analysis",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
