@@ -41,7 +41,13 @@
 }
 
 /* ===== BASE ===== */
-html { font-size: 16px; scroll-behavior: smooth; }
+html, body { 
+  font-size: 16px; 
+  scroll-behavior: smooth; 
+  overflow-x: hidden;
+  width: 100%;
+  position: relative;
+}
 
 body {
   background: var(--bg);
@@ -50,7 +56,6 @@ body {
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  overflow-x: hidden;
 }
 
 /* Global smooth defaults */
@@ -2971,10 +2976,16 @@ code, pre, .mono {
   .venture-arch-wrapper {
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
-    margin: 0 -24px;
+    width: 100vw;
+    position: relative;
+    left: 50%;
+    right: 50%;
+    margin-left: -50vw;
+    margin-right: -50vw;
     padding: 0 24px;
+    padding-bottom: 24px;
   }
-  .venture-arch-diagram { min-width: 800px; }
+  .venture-arch-diagram { min-width: 800px; margin-left: 24px; }
   
   /* Trust / Architecture */
   .trust-hero { padding: 100px 0 60px; }
