@@ -44,6 +44,7 @@ const supabase_1 = require("./supabase");
 const diff_1 = require("./diff");
 const checks_1 = require("./checks");
 const usage_1 = require("./usage");
+const reachability_1 = require("./reachability");
 const app = (0, express_1.default)();
 app.use(express_1.default.json());
 // ---------------------------------------------------------------------------
@@ -84,7 +85,34 @@ app.post("/webhook", async (req, res) => {
         const packages = depFiles.flatMap((f) => (0, diff_1.parseDiff)(f.filename, f.patch));
         if (packages.length === 0)
             return;
+        // ── Step 1: Check Supabase for known vulnerabilities ──────────────
         const vulns = await (0, supabase_1.checkPackages)(packages);
+        // ── Step 2: Reachability analysis ─────────────────────────────────
+        // Only analyse reachability if we actually found vulnerabilities
+        if (vulns.length > 0) {
+            const vulnerablePackageNames = [...new Set(vulns.map((v) => v.package))];
+            try {
+                const reachabilityResults = await (0, reachability_1.analyzeReachability)(octokit, owner, repo, headSha, vulnerablePackageNames);
+                // Merge reachability results back into the vuln objects
+                for (const vuln of vulns) {
+                    const result = reachabilityResults.get(vuln.package);
+                    if (result) {
+                        vuln.isReachable = result.isReachable;
+                        vuln.reachabilityEvidence = result.evidence;
+                    }
+                }
+                console.log(`[reachability] ${owner}/${repo}@${headSha.slice(0, 7)}: ` +
+                    `${vulnerablePackageNames.length} packages checked, ` +
+                    `${vulns.filter((v) => v.isReachable).length} reachable, ` +
+                    `${vulns.filter((v) => !v.isReachable).length} bypassed`);
+            }
+            catch (err) {
+                // If reachability analysis fails, all vulns stay as isReachable=true
+                // (safety-first — we never accidentally suppress a real threat)
+                console.error("[reachability] Analysis failed, defaulting to all reachable:", err);
+            }
+        }
+        // ── Step 3: Record usage & post check run ─────────────────────────
         if (isPrivate) {
             await (0, usage_1.recordUsage)(installationId, `${owner}/${repo}`, prNumber);
         }

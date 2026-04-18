@@ -7,6 +7,7 @@ import { checkPackages } from "./supabase";
 import { parseDiff, DEP_FILES } from "./diff";
 import { postCheckRun } from "./checks";
 import { isOverLimit, recordUsage } from "./usage";
+import { analyzeReachability } from "./reachability";
 
 const app = express();
 app.use(express.json());
@@ -63,8 +64,46 @@ app.post("/webhook", async (req, res) => {
       const packages = depFiles.flatMap((f: any) => parseDiff(f.filename, f.patch));
       if (packages.length === 0) return;
 
+      // ── Step 1: Check Supabase for known vulnerabilities ──────────────
       const vulns = await checkPackages(packages);
 
+      // ── Step 2: Reachability analysis ─────────────────────────────────
+      // Only analyse reachability if we actually found vulnerabilities
+      if (vulns.length > 0) {
+        const vulnerablePackageNames = [...new Set(vulns.map((v) => v.package))];
+
+        try {
+          const reachabilityResults = await analyzeReachability(
+            octokit as any,
+            owner,
+            repo,
+            headSha,
+            vulnerablePackageNames
+          );
+
+          // Merge reachability results back into the vuln objects
+          for (const vuln of vulns) {
+            const result = reachabilityResults.get(vuln.package);
+            if (result) {
+              vuln.isReachable = result.isReachable;
+              vuln.reachabilityEvidence = result.evidence;
+            }
+          }
+
+          console.log(
+            `[reachability] ${owner}/${repo}@${headSha.slice(0, 7)}: ` +
+            `${vulnerablePackageNames.length} packages checked, ` +
+            `${vulns.filter((v) => v.isReachable).length} reachable, ` +
+            `${vulns.filter((v) => !v.isReachable).length} bypassed`
+          );
+        } catch (err) {
+          // If reachability analysis fails, all vulns stay as isReachable=true
+          // (safety-first — we never accidentally suppress a real threat)
+          console.error("[reachability] Analysis failed, defaulting to all reachable:", err);
+        }
+      }
+
+      // ── Step 3: Record usage & post check run ─────────────────────────
       if (isPrivate) {
         await recordUsage(installationId, `${owner}/${repo}`, prNumber);
       }

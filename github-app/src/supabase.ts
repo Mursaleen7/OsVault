@@ -15,6 +15,10 @@ export interface VulnMatch {
   cvss_severity: string | null;
   combined_risk_score: number | null;
   in_kev: boolean;
+  /** Whether the package is actually imported in the source tree */
+  isReachable: boolean;
+  /** File paths where the import was detected (up to 5) */
+  reachabilityEvidence: string[];
 }
 
 export async function checkPackages(
@@ -59,6 +63,8 @@ export async function checkPackages(
         cvss_severity:       row.cvss_severity as string | null,
         combined_risk_score: row.combined_risk_score as number | null,
         in_kev:              (row.in_kev as boolean) ?? false,
+        isReachable:         true,           // default — reachability engine will override
+        reachabilityEvidence: [],
       });
     }
   }

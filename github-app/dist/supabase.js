@@ -37,6 +37,8 @@ async function checkPackages(packages) {
                 cvss_severity: row.cvss_severity,
                 combined_risk_score: row.combined_risk_score,
                 in_kev: row.in_kev ?? false,
+                isReachable: true, // default — reachability engine will override
+                reachabilityEvidence: [],
             });
         }
     }

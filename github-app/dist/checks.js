@@ -9,6 +9,26 @@ const SEVERITY_EMOJI = {
     MEDIUM: "🟡",
     LOW: "🟢",
 };
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+/** Partition vulnerabilities into reachable and unreachable buckets */
+function partitionByReachability(vulns) {
+    const reachable = [];
+    const unreachable = [];
+    for (const v of vulns) {
+        if (v.isReachable) {
+            reachable.push(v);
+        }
+        else {
+            unreachable.push(v);
+        }
+    }
+    return { reachable, unreachable };
+}
+// ---------------------------------------------------------------------------
+// Summary builder
+// ---------------------------------------------------------------------------
 /** Build the markdown summary for the GitHub Check */
 function buildSummary(vulns, totalScanned, isOverLimit, installationId) {
     // Paywall gate
@@ -25,6 +45,7 @@ function buildSummary(vulns, totalScanned, isOverLimit, installationId) {
             conclusion: "success", // don't block the PR, just notify
         };
     }
+    // No vulnerabilities at all
     if (vulns.length === 0) {
         return {
             title: `OsVault — ✅ No vulnerabilities found (${totalScanned} packages scanned)`,
@@ -32,43 +53,98 @@ function buildSummary(vulns, totalScanned, isOverLimit, installationId) {
             conclusion: "success",
         };
     }
-    const kevVulns = vulns.filter((v) => v.in_kev);
-    const criticalVulns = vulns.filter((v) => v.cvss_severity === "CRITICAL");
-    const highVulns = vulns.filter((v) => v.cvss_severity === "HIGH");
-    // Fail the check if any CISA KEV or CRITICAL vulns are present
+    // ── Partition by reachability ──────────────────────────────────────────
+    const { reachable, unreachable } = partitionByReachability(vulns);
+    // Only reachable vulnerabilities should block the PR
+    const kevVulns = reachable.filter((v) => v.in_kev);
+    const criticalVulns = reachable.filter((v) => v.cvss_severity === "CRITICAL");
+    const highVulns = reachable.filter((v) => v.cvss_severity === "HIGH");
+    // Fail only if there are reachable CISA KEV or CRITICAL vulns
     const shouldFail = kevVulns.length > 0 || criticalVulns.length > 0;
-    const title = shouldFail
-        ? `OsVault — ❌ ${criticalVulns.length} critical, ${kevVulns.length} CISA-exploited vulnerabilities found`
-        : `OsVault — ⚠️ ${vulns.length} vulnerabilit${vulns.length === 1 ? "y" : "ies"} found`;
-    const rows = vulns.slice(0, 20).map((v) => {
-        const id = v.cve_id ? `[${v.cve_id}](${APP_URL}/cve/${v.cve_id})` : (v.osv_id ?? "—");
-        const sev = `${SEVERITY_EMOJI[v.cvss_severity ?? ""] ?? "⚪"} ${v.cvss_severity ?? "—"}`;
-        const kev = v.in_kev ? " 🚨 **CISA KEV**" : "";
-        const desc = v.summary?.slice(0, 80) ?? "—";
-        return `| \`${v.package}\` | ${id}${kev} | ${sev} | ${v.cvss_score ?? "—"} | ${desc} |`;
-    });
-    const table = [
-        "| Package | CVE / OSV ID | Severity | CVSS | Summary |",
-        "|---------|-------------|----------|------|---------|",
-        ...rows,
-        ...(vulns.length > 20 ? [`| … | +${vulns.length - 20} more | | | |`] : []),
-    ].join("\n");
+    // ── Title ─────────────────────────────────────────────────────────────
+    let title;
+    if (shouldFail) {
+        title = `OsVault — ❌ ${criticalVulns.length} critical, ${kevVulns.length} CISA-exploited vulnerabilities (reachable)`;
+    }
+    else if (reachable.length > 0) {
+        title = `OsVault — ⚠️ ${reachable.length} reachable vulnerabilit${reachable.length === 1 ? "y" : "ies"} found`;
+    }
+    else {
+        // All vulns are unreachable!
+        title = `OsVault — ✅ ${unreachable.length} vulnerabilit${unreachable.length === 1 ? "y" : "ies"} found but ALL are unreachable`;
+    }
+    // ── Reachable table ───────────────────────────────────────────────────
+    let reachableSection = "";
+    if (reachable.length > 0) {
+        const rows = reachable.slice(0, 20).map((v) => {
+            const id = v.cve_id ? `[${v.cve_id}](${APP_URL}/cve/${v.cve_id})` : (v.osv_id ?? "—");
+            const sev = `${SEVERITY_EMOJI[v.cvss_severity ?? ""] ?? "⚪"} ${v.cvss_severity ?? "—"}`;
+            const kev = v.in_kev ? " 🚨 **CISA KEV**" : "";
+            const desc = v.summary?.slice(0, 80) ?? "—";
+            return `| \`${v.package}\` | ${id}${kev} | ${sev} | ${v.cvss_score ?? "—"} | 🚨 REACHABLE | ${desc} |`;
+        });
+        reachableSection = [
+            "",
+            "### 🚨 Reachable Vulnerabilities — Action Required",
+            "",
+            "These packages are **directly imported** in your source code. The vulnerability is exploitable.",
+            "",
+            "| Package | CVE / OSV ID | Severity | CVSS | Status | Summary |",
+            "|---------|-------------|----------|------|--------|---------|",
+            ...rows,
+            ...(reachable.length > 20 ? [`| … | +${reachable.length - 20} more | | | | |`] : []),
+        ].join("\n");
+    }
+    // ── Unreachable table ─────────────────────────────────────────────────
+    let unreachableSection = "";
+    if (unreachable.length > 0) {
+        const rows = unreachable.slice(0, 15).map((v) => {
+            const id = v.cve_id ? `[${v.cve_id}](${APP_URL}/cve/${v.cve_id})` : (v.osv_id ?? "—");
+            const sev = `${SEVERITY_EMOJI[v.cvss_severity ?? ""] ?? "⚪"} ~~${v.cvss_severity ?? "—"}~~`;
+            const desc = v.summary?.slice(0, 80) ?? "—";
+            return `| ~~\`${v.package}\`~~ | ${id} | ${sev} | ~~${v.cvss_score ?? "—"}~~ | 🛡️ BYPASSED | ${desc} |`;
+        });
+        unreachableSection = [
+            "",
+            `### 🛡️ ${unreachable.length} Vulnerabilit${unreachable.length === 1 ? "y" : "ies"} Bypassed — Proven Unreachable`,
+            "",
+            "> **OsVault scanned your source code and confirmed these packages are never imported.** These vulnerabilities cannot affect your application and have been automatically excluded from the security gate.",
+            "",
+            "| Package | CVE / OSV ID | Severity | CVSS | Status | Summary |",
+            "|---------|-------------|----------|------|--------|---------|",
+            ...rows,
+            ...(unreachable.length > 15 ? [`| … | +${unreachable.length - 15} more bypassed | | | | |`] : []),
+        ].join("\n");
+    }
+    // ── KEV warning ───────────────────────────────────────────────────────
     const kevWarning = kevVulns.length > 0
-        ? `\n> 🚨 **${kevVulns.length} CISA Known Exploited Vulnerabilit${kevVulns.length === 1 ? "y" : "ies"} detected.** These are actively exploited in the wild. Merge is blocked until resolved.\n`
+        ? `\n> 🚨 **${kevVulns.length} CISA Known Exploited Vulnerabilit${kevVulns.length === 1 ? "y" : "ies"} detected.** These are actively exploited in the wild and are imported in your code. Merge is blocked until resolved.\n`
         : "";
+    // ── Compose final summary ─────────────────────────────────────────────
+    const statsLine = [
+        `**${totalScanned}** packages scanned`,
+        `**${vulns.length}** vulnerable`,
+        `**${reachable.length}** reachable`,
+        `**${unreachable.length}** bypassed`,
+        `**${criticalVulns.length}** critical`,
+        `**${highVulns.length}** high`,
+    ].join(" · ");
     const summary = [
         "## OsVault Security Check",
         "",
         kevWarning,
-        `**${totalScanned}** packages scanned · **${vulns.length}** vulnerable · **${criticalVulns.length}** critical · **${highVulns.length}** high`,
+        statsLine,
+        reachableSection,
+        unreachableSection,
         "",
-        table,
-        "",
-        `---`,
+        "---",
         `[View full report on OsVault](${APP_URL}/checker) · [Docs](${APP_URL})`,
     ].join("\n");
     return { title, summary, conclusion: shouldFail ? "failure" : "success" };
 }
+// ---------------------------------------------------------------------------
+// Post Check Run
+// ---------------------------------------------------------------------------
 /** Create a GitHub Check Run and post results */
 async function postCheckRun(octokit, owner, repo, headSha, vulns, totalScanned, overLimit, installationId) {
     const { title, summary, conclusion } = buildSummary(vulns, totalScanned, overLimit, installationId);
