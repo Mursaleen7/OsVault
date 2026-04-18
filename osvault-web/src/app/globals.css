@@ -2861,6 +2861,76 @@ code, pre, .mono {
 .blog-post-cta-content h3 { font-size: 20px; font-weight: 800; color: var(--white-pure); margin-bottom: 8px; }
 .blog-post-cta-content p { font-size: 14px; color: var(--slate); max-width: 400px; line-height: 1.5; }
 
+/* ═══════════════════════════════════════════════════════════════════════════
+   MOBILE NAVIGATION MENU
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.mobile-menu-trigger {
+  display: none;
+  background: transparent;
+  border: none;
+  color: var(--white-pure);
+  cursor: pointer;
+  padding: 8px;
+  margin-left: 12px;
+}
+.mobile-menu-trigger svg { width: 24px; height: 24px; }
+
+.mobile-menu-close {
+  background: transparent;
+  border: none;
+  color: var(--white-pure);
+  cursor: pointer;
+  padding: 8px;
+}
+.mobile-menu-close svg { width: 24px; height: 24px; }
+
+.mobile-overlay {
+  position: fixed;
+  top: 0; left: 0; width: 100%; height: 100vh;
+  z-index: 9999;
+  background: rgba(3, 3, 4, 0.95);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  display: flex; flex-direction: column;
+  opacity: 0; pointer-events: none;
+  transform: translateY(-8px);
+  transition: opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1), transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.mobile-overlay.open {
+  opacity: 1; pointer-events: auto;
+  transform: translateY(0);
+}
+
+.mobile-overlay-header {
+  height: 60px;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 24px;
+}
+
+.mobile-overlay-nav {
+  display: flex; flex-direction: column;
+  padding: 40px 24px; gap: 24px;
+}
+
+.mobile-overlay-nav a:not(.btn-primary):not(.btn-outline) {
+  font-size: 24px; font-weight: 700; color: var(--white-pure);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+.mobile-overlay-nav a:not(.btn-primary):not(.btn-outline):hover {
+  color: var(--red);
+}
+
+.mobile-overlay-divider {
+  width: 100%; height: 1px; background: var(--border-dark); margin: 8px 0;
+}
+
+.mobile-nav-btn {
+  justify-content: center; width: 100%; text-align: center; font-size: 16px; padding: 14px;
+}
+
 
 /* ═══════════════════════════════════════════════════════════════════════════
    UNIFIED RESPONSIVE SYSTEM
@@ -2888,6 +2958,8 @@ code, pre, .mono {
   .navbar-right { gap: 12px; }
   .navbar-link { display: none; } /* Hide text links entirely on mobile - defer to app CTA or hamburger */
   #nav-install-btn { display: none; } /* Hide the massive github install button from top nav on phones to prevent space wars. */
+  .btn-outline { display: none; } /* Hide sign-in standard button, mapped into drawer */
+  .mobile-menu-trigger { display: flex; align-items: center; justify-content: center; }
   
   /* Hero & Typography Clamping */
   .hero-h1 { font-size: clamp(36px, 8vw, 48px); line-height: 1.1; }

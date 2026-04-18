@@ -1,4 +1,5 @@
 import "./globals.css";
+import MobileMenu from "@/components/MobileMenu";
 
 export const metadata = {
   title: { default: "OsVault — Open Source Vulnerability Intelligence", template: "%s | OsVault" },
@@ -70,6 +71,7 @@ async function Nav() {
           >
             Install GitHub App
           </a>
+          <MobileMenu />
         </div>
       </div>
     </nav>
