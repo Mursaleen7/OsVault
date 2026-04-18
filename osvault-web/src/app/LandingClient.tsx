@@ -831,6 +831,46 @@ export default function LandingClient({ stats, recent }: Props) {
               </div>
             </div>
           </Reveal>
+
+          {/* ===== MOBILE-NATIVE TIMELINE ===== */}
+          <Reveal delay={200}>
+            <div className="mobile-arch-timeline">
+              <div className="timeline-step">
+                <div className="timeline-icon">1</div>
+                <div className="timeline-content">
+                  <h4>Data Sources</h4>
+                  <p>Aggregate critical intelligence from dozens of fragmented origins.</p>
+                  <div className="timeline-badges">
+                    <span>NVD</span>
+                    <span>OSV.dev</span>
+                    <span>EPSS</span>
+                    <span>CISA KEV</span>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="timeline-step active">
+                <div className="timeline-icon pulse-green">2</div>
+                <div className="timeline-content">
+                  <h4 className="green-text">OsVault Engine (Ingest-RS)</h4>
+                  <p>Unify, normalize, and violently accelerate threat-score mapping in real-time.</p>
+                </div>
+              </div>
+              
+              <div className="timeline-step">
+                <div className="timeline-icon">3</div>
+                <div className="timeline-content">
+                  <h4>Output Ecology</h4>
+                  <p>Deliver deterministic intelligence directly into your workflow.</p>
+                  <div className="timeline-badges">
+                    <span>Risk Score</span>
+                    <span>CVE DB</span>
+                    <span>PR Checks</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </Reveal>
         </div>
       </section>
 

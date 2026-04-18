@@ -2936,6 +2936,13 @@ code, pre, .mono {
   justify-content: center; width: 100%; text-align: center; font-size: 16px; padding: 14px;
 }
 
+/* ═══════════════════════════════════════════════════════════════════════════
+   MOBILE ARCHITECTURE TIMELINE (Hidden natively on Desktop)
+   ═══════════════════════════════════════════════════════════════════════════ */
+.mobile-arch-timeline {
+  display: none;
+}
+
 
 /* ═══════════════════════════════════════════════════════════════════════════
    UNIFIED RESPONSIVE SYSTEM
@@ -2973,35 +2980,99 @@ code, pre, .mono {
   /* Feature Elements & Diagrams */
   .feature-grid { grid-template-columns: 1fr; gap: 24px; }
   
-  .venture-arch-wrapper {
+  /* Strip out old desktop architecture diagram */
+  .venture-arch-wrapper, .venture-arch-diagram {
+    display: none !important;
+  }
+  
+  /* Construct the Native Mobile Timeline */
+  .mobile-arch-timeline {
+    display: block;
     width: 100%;
-    margin: 0;
-    padding: 0;
-  }
-  .venture-arch-diagram { 
-    min-width: unset; 
-    width: 100%; 
-    margin: 0; 
-    padding: 0; 
-  }
-  .venture-arch-lines { display: none; } /* Strip absolute SVG lines natively on mobile */
-  
-  .venture-arch-grid {
-    height: auto;
-    gap: 40px; /* Space out the tiers vertically */
+    margin-top: 40px;
+    position: relative;
+    padding-left: 10px;
   }
   
-  .arch-tier-top, .arch-tier-bottom {
-    padding: 0;
-    flex-wrap: wrap; /* Group nodes into clean 2x2 or 1x3 matrices */
-    justify-content: center;
-    gap: 16px;
+  .timeline-step {
+    position: relative;
+    padding-left: 48px;
+    padding-bottom: 40px;
+  }
+  .timeline-step:last-child { padding-bottom: 0px; }
+  
+  /* Vertical Spine */
+  .timeline-step::before {
+    content: '';
+    position: absolute;
+    left: 16px;
+    top: 32px;
+    bottom: -8px;
+    width: 2px;
+    background: var(--border-2);
+  }
+  .timeline-step:last-child::before { display: none; }
+  
+  /* Glowing Step Logic */
+  .timeline-step.active::before {
+    background: linear-gradient(to bottom, var(--green) 0%, var(--border-2) 100%);
   }
   
-  .venture-arch-node {
-    width: calc(50% - 8px); /* Take up exactly half the screen width minus flex gap */
-    min-width: 130px;
-    padding: 12px 16px;
+  .timeline-icon {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: rgba(8, 8, 10, 0.95);
+    border: 1px solid var(--border-dark);
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--slate);
+    z-index: 2;
+  }
+  
+  .timeline-icon.pulse-green {
+    color: var(--green);
+    border: 1px dashed rgba(34, 197, 94, 0.5);
+    box-shadow: 0 0 16px rgba(34, 197, 94, 0.15);
+  }
+  
+  .timeline-content h4 {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--white-pure);
+    margin-bottom: 8px;
+    margin-top: 6px;
+  }
+  .timeline-content h4.green-text { color: var(--green); }
+  
+  .timeline-content p {
+    font-size: 13.5px;
+    color: var(--slate);
+    line-height: 1.5;
+    margin-bottom: 12px;
+  }
+  
+  .timeline-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 10px;
+  }
+  
+  .timeline-badges span {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--white-pure);
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    padding: 6px 12px;
+    border-radius: 6px;
   }
   
   /* Trust / Architecture */
