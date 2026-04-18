@@ -2974,18 +2974,35 @@ code, pre, .mono {
   .feature-grid { grid-template-columns: 1fr; gap: 24px; }
   
   .venture-arch-wrapper {
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    width: 100vw;
-    position: relative;
-    left: 50%;
-    right: 50%;
-    margin-left: -50vw;
-    margin-right: -50vw;
+    width: 100%;
+    margin: 0;
     padding: 0;
-    padding-bottom: 24px;
   }
-  .venture-arch-diagram { min-width: 800px; margin: 0; padding: 0 24px; }
+  .venture-arch-diagram { 
+    min-width: unset; 
+    width: 100%; 
+    margin: 0; 
+    padding: 0; 
+  }
+  .venture-arch-lines { display: none; } /* Strip absolute SVG lines natively on mobile */
+  
+  .venture-arch-grid {
+    height: auto;
+    gap: 40px; /* Space out the tiers vertically */
+  }
+  
+  .arch-tier-top, .arch-tier-bottom {
+    padding: 0;
+    flex-wrap: wrap; /* Group nodes into clean 2x2 or 1x3 matrices */
+    justify-content: center;
+    gap: 16px;
+  }
+  
+  .venture-arch-node {
+    width: calc(50% - 8px); /* Take up exactly half the screen width minus flex gap */
+    min-width: 130px;
+    padding: 12px 16px;
+  }
   
   /* Trust / Architecture */
   .trust-hero { padding: 100px 0 60px; }
