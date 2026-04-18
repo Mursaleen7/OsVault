@@ -13,17 +13,19 @@ export const metadata = {
   },
 };
 
-import {
-  ClerkProvider,
-  SignInButton,
-  UserButton,
-  OrganizationSwitcher,
-} from "@clerk/nextjs";
-import { auth } from "@clerk/nextjs/server";
-import { dark } from "@clerk/themes";
+// TEMPORARILY COMMENTED OUT - Add Clerk keys to enable auth
+// import {
+//   ClerkProvider,
+//   SignInButton,
+//   UserButton,
+//   OrganizationSwitcher,
+// } from "@clerk/nextjs";
+// import { auth } from "@clerk/nextjs/server";
+// import { dark } from "@clerk/themes";
 
 async function Nav() {
-  const { userId } = await auth();
+  const userId = null; // Temporarily disabled
+  // const { userId } = await auth();
 
   return (
     <nav className="navbar" id="navbar">
@@ -45,8 +47,8 @@ async function Nav() {
           <a href="/trust" className="navbar-link" id="nav-trust">Trust</a>
           <a href="/blog" className="navbar-link" id="nav-blog">Blog</a>
           
-          {/* Clerk Auth UI */}
-          {!userId ? (
+          {/* Clerk Auth UI - TEMPORARILY DISABLED */}
+          {/* {!userId ? (
             <SignInButton mode="modal"><button className="btn-outline" style={{ fontSize: 13, padding: "7px 18px", cursor: "pointer" }}>Sign In</button></SignInButton>
           ) : (
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
@@ -56,7 +58,8 @@ async function Nav() {
               />
               <UserButton />
             </div>
-          )}
+          )} */}
+          <a href="/pricing" className="btn-outline" style={{ fontSize: 13, padding: "7px 18px" }}>Sign In</a>
 
           <a
             href="https://github.com/apps/osvault-security"
@@ -122,7 +125,8 @@ function Footer() {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <ClerkProvider appearance={{ baseTheme: dark, variables: { colorPrimary: '#E63946' } }}>
+    // TEMPORARILY DISABLED - Add Clerk keys to enable ClerkProvider
+    // <ClerkProvider appearance={{ baseTheme: dark, variables: { colorPrimary: '#E63946' } }}>
       <html lang="en">
         <body>
           <Nav />
@@ -130,6 +134,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <Footer />
         </body>
       </html>
-    </ClerkProvider>
+    // </ClerkProvider>
   );
 }

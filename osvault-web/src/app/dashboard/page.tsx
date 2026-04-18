@@ -1,4 +1,5 @@
-import { auth, clerkClient } from "@clerk/nextjs/server";
+// TEMPORARILY COMMENTED OUT - Add Clerk keys to enable auth
+// import { auth, clerkClient } from "@clerk/nextjs/server";
 import { supabase } from "@/lib/supabase";
 import { AnimatedCounter } from "@/components/AnimatedCounter";
 
@@ -19,7 +20,10 @@ function formatTimeAgo(dateString: string) {
 }
 
 export default async function DashboardPage() {
-  const { orgId, userId } = await auth();
+  // TEMPORARILY DISABLED - Add Clerk keys to enable auth
+  const orgId = null;
+  const userId = null;
+  // const { orgId, userId } = await auth();
 
   // If no user/org ID is assigned, or we cannot verify the auth context, 
   // return an empty state or prompt them to establish an organization.

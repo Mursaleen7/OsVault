@@ -1,9 +1,12 @@
-import { auth } from "@clerk/nextjs/server";
+// TEMPORARILY COMMENTED OUT - Add Clerk keys to enable auth
+// import { auth } from "@clerk/nextjs/server";
 import { supabase } from "@/lib/supabase";
 import PricingClient from "./PricingClient";
 
 export default async function PricingPage() {
-  const { orgId } = await auth();
+  // TEMPORARILY DISABLED - Add Clerk keys to enable auth
+  const orgId = null;
+  // const { orgId } = await auth();
 
   let currentPlan = null;
 

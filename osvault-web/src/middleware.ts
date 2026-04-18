@@ -1,25 +1,31 @@
-import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
+// TEMPORARILY COMMENTED OUT - Add Clerk keys to enable middleware
+// import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 
-// Define public routes that don't require authentication
-const isPublicRoute = createRouteMatcher([
-  "/",
-  "/checker(.*)",
-  "/pricing",
-  "/trust",
-  "/blog(.*)",
-  "/api/webhooks/stripe",
-  "/api/v1/(.*)", // API handles its own Bearer auth
-  "/sign-in(.*)",
-  "/sign-up(.*)",
-]);
+// // Define public routes that don't require authentication
+// const isPublicRoute = createRouteMatcher([
+//   "/",
+//   "/checker(.*)",
+//   "/pricing",
+//   "/trust",
+//   "/blog(.*)",
+//   "/api/webhooks/stripe",
+//   "/api/v1/(.*)", // API handles its own Bearer auth
+//   "/sign-in(.*)",
+//   "/sign-up(.*)",
+// ]);
 
-export default clerkMiddleware(async (auth, req) => {
-  // If route is public, do nothing
-  if (isPublicRoute(req)) return;
+// export default clerkMiddleware(async (auth, req) => {
+//   // If route is public, do nothing
+//   if (isPublicRoute(req)) return;
 
-  // Otherwise protect the route
-  await auth.protect();
-});
+//   // Otherwise protect the route
+//   await auth.protect();
+// });
+
+// Temporary passthrough middleware
+export default function middleware() {
+  return;
+}
 
 export const config = {
   matcher: [
