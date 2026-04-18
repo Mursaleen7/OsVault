@@ -750,81 +750,83 @@ export default function LandingClient({ stats, recent }: Props) {
           </Reveal>
 
           <Reveal>
-            <div className="venture-arch-diagram">
-              <div className="venture-arch-grid">
-                {/* SVG Connecting Lines */}
-                <svg className="venture-arch-lines" viewBox="0 0 800 400" preserveAspectRatio="none">
-                  <defs>
-                    <linearGradient id="line-grad" x1="0%" y1="0%" x2="0%" y2="100%">
-                      <stop offset="0%" stopColor="var(--slate-dim)" stopOpacity="0.3" />
-                      <stop offset="50%" stopColor="var(--green)" stopOpacity="0.8" />
-                      <stop offset="100%" stopColor="var(--red)" stopOpacity="0.4" />
-                    </linearGradient>
-                    <linearGradient id="flow-grad" x1="0%" y1="0%" x2="0%" y2="100%">
-                      <stop offset="0%" stopColor="var(--green)" stopOpacity="0" />
-                      <stop offset="50%" stopColor="var(--green)" stopOpacity="1" />
-                      <stop offset="100%" stopColor="var(--green)" stopOpacity="0" />
-                    </linearGradient>
-                  </defs>
+            <div className="venture-arch-wrapper">
+              <div className="venture-arch-diagram">
+                <div className="venture-arch-grid">
+                  {/* SVG Connecting Lines */}
+                  <svg className="venture-arch-lines" viewBox="0 0 800 400" preserveAspectRatio="none">
+                    <defs>
+                      <linearGradient id="line-grad" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" stopColor="var(--slate-dim)" stopOpacity="0.3" />
+                        <stop offset="50%" stopColor="var(--green)" stopOpacity="0.8" />
+                        <stop offset="100%" stopColor="var(--red)" stopOpacity="0.4" />
+                      </linearGradient>
+                      <linearGradient id="flow-grad" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" stopColor="var(--green)" stopOpacity="0" />
+                        <stop offset="50%" stopColor="var(--green)" stopOpacity="1" />
+                        <stop offset="100%" stopColor="var(--green)" stopOpacity="0" />
+                      </linearGradient>
+                    </defs>
 
-                  {/* Top Incoming Lines */}
-                  {[
-                    { x1: 150, d: "M 150 60 C 150 140, 360 140, 360 200" },
-                    { x1: 316, d: "M 316 60 C 316 140, 380 140, 380 200" },
-                    { x1: 483, d: "M 483 60 C 483 140, 420 140, 420 200" },
-                    { x1: 650, d: "M 650 60 C 650 140, 440 140, 440 200" },
-                  ].map((line, i) => (
-                    <g key={`top-${i}`}>
-                      <path d={line.d} fill="none" stroke="url(#line-grad)" strokeWidth="1.5" />
-                      <path d={line.d} fill="none" stroke="url(#flow-grad)" strokeWidth="3"
-                        strokeDasharray="40 200" className="arch-flow-anim" />
-                    </g>
-                  ))}
+                    {/* Top Incoming Lines */}
+                    {[
+                      { x1: 150, d: "M 150 60 C 150 140, 360 140, 360 200" },
+                      { x1: 316, d: "M 316 60 C 316 140, 380 140, 380 200" },
+                      { x1: 483, d: "M 483 60 C 483 140, 420 140, 420 200" },
+                      { x1: 650, d: "M 650 60 C 650 140, 440 140, 440 200" },
+                    ].map((line, i) => (
+                      <g key={`top-${i}`}>
+                        <path d={line.d} fill="none" stroke="url(#line-grad)" strokeWidth="1.5" />
+                        <path d={line.d} fill="none" stroke="url(#flow-grad)" strokeWidth="3"
+                          strokeDasharray="40 200" className="arch-flow-anim" />
+                      </g>
+                    ))}
 
-                  {/* Bottom Outgoing Lines */}
-                  {[
-                    { d: "M 360 280 C 360 340, 200 340, 200 400" },
-                    { d: "M 400 280 C 400 340, 400 340, 400 400" },
-                    { d: "M 440 280 C 440 340, 600 340, 600 400" },
-                  ].map((line, i) => (
-                    <g key={`bot-${i}`}>
-                      <path d={line.d} fill="none" stroke="url(#line-grad)" strokeWidth="1.5" />
-                      <path d={line.d} fill="none" stroke="url(#flow-grad)" strokeWidth="3"
-                        strokeDasharray="40 200" className="arch-flow-anim" />
-                    </g>
-                  ))}
-                </svg>
+                    {/* Bottom Outgoing Lines */}
+                    {[
+                      { d: "M 360 280 C 360 340, 200 340, 200 400" },
+                      { d: "M 400 280 C 400 340, 400 340, 400 400" },
+                      { d: "M 440 280 C 440 340, 600 340, 600 400" },
+                    ].map((line, i) => (
+                      <g key={`bot-${i}`}>
+                        <path d={line.d} fill="none" stroke="url(#line-grad)" strokeWidth="1.5" />
+                        <path d={line.d} fill="none" stroke="url(#flow-grad)" strokeWidth="3"
+                          strokeDasharray="40 200" className="arch-flow-anim" />
+                      </g>
+                    ))}
+                  </svg>
 
-                {/* Top Nodes: Sources */}
-                <div className="arch-tier arch-tier-top">
-                  {["NVD", "OSV.dev", "EPSS", "CISA KEV"].map(src => (
-                    <div className="venture-arch-node" key={src}>
-                      <span className="venture-arch-eyebrow">SOURCE</span>
-                      {src}
-                    </div>
-                  ))}
-                </div>
+                  {/* Top Nodes: Sources */}
+                  <div className="arch-tier arch-tier-top">
+                    {["NVD", "OSV.dev", "EPSS", "CISA KEV"].map(src => (
+                      <div className="venture-arch-node" key={src}>
+                        <span className="venture-arch-eyebrow">SOURCE</span>
+                        {src}
+                      </div>
+                    ))}
+                  </div>
 
-                {/* Center Node: Engine */}
-                <div className="arch-tier arch-tier-center">
-                  <div className="venture-arch-engine">
-                    <div className="engine-ring engine-ring-outer" />
-                    <div className="engine-ring engine-ring-inner" />
-                    <div className="engine-core">
-                      <span className="venture-arch-eyebrow" style={{ color: "var(--green)" }}>INGEST-RS</span>
-                      <span className="engine-text">OSVAULT ENGINE</span>
+                  {/* Center Node: Engine */}
+                  <div className="arch-tier arch-tier-center">
+                    <div className="venture-arch-engine">
+                      <div className="engine-ring engine-ring-outer" />
+                      <div className="engine-ring engine-ring-inner" />
+                      <div className="engine-core">
+                        <span className="venture-arch-eyebrow" style={{ color: "var(--green)" }}>INGEST-RS</span>
+                        <span className="engine-text">OSVAULT ENGINE</span>
+                      </div>
                     </div>
                   </div>
-                </div>
 
-                {/* Bottom Nodes: Outputs */}
-                <div className="arch-tier arch-tier-bottom">
-                  {["RISK SCORE", "CVE DATABASE", "PR CHECKS"].map(out => (
-                    <div className="venture-arch-node" key={out}>
-                      <span className="venture-arch-eyebrow">OUTPUT</span>
-                      {out}
-                    </div>
-                  ))}
+                  {/* Bottom Nodes: Outputs */}
+                  <div className="arch-tier arch-tier-bottom">
+                    {["RISK SCORE", "CVE DATABASE", "PR CHECKS"].map(out => (
+                      <div className="venture-arch-node" key={out}>
+                        <span className="venture-arch-eyebrow">OUTPUT</span>
+                        {out}
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
             </div>

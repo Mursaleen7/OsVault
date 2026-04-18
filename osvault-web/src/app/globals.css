@@ -183,6 +183,7 @@ code, pre, .mono {
   cursor: pointer;
   transition: background 0.35s ease, border-color 0.35s ease, transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
   text-decoration: none;
+  white-space: nowrap;
 }
 
 .btn-outline:hover { background: rgba(255, 255, 255, 0.04); }
@@ -1413,6 +1414,10 @@ code, pre, .mono {
   margin-left: auto;
   margin-right: auto;
   padding: 20px 0;
+}
+
+.venture-arch-wrapper {
+  width: 100%;
 }
 
 .venture-arch-grid {
@@ -2878,17 +2883,26 @@ code, pre, .mono {
   /* Layout & Containers */
   .container { padding: 0 24px; }
   
-  /* Navbar */
+  /* Navbar & Buttons */
   .navbar-inner { padding: 0 24px; }
   .navbar-right { gap: 12px; }
   .navbar-link { display: none; } /* Hide text links entirely on mobile - defer to app CTA or hamburger */
+  #nav-install-btn { display: none; } /* Hide the massive github install button from top nav on phones to prevent space wars. */
   
   /* Hero & Typography Clamping */
   .hero-h1 { font-size: clamp(36px, 8vw, 48px); line-height: 1.1; }
   .hero-p { font-size: 16px; padding: 0 10px; }
   
-  /* Feature Elements */
+  /* Feature Elements & Diagrams */
   .feature-grid { grid-template-columns: 1fr; gap: 24px; }
+  
+  .venture-arch-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    margin: 0 -24px;
+    padding: 0 24px;
+  }
+  .venture-arch-diagram { min-width: 800px; }
   
   /* Trust / Architecture */
   .trust-hero { padding: 100px 0 60px; }
