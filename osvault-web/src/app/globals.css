@@ -3041,6 +3041,10 @@ code, pre, .mono {
     box-shadow: 0 0 16px rgba(34, 197, 94, 0.15);
   }
   
+  .timeline-content {
+    text-align: left; /* Override inherited center alignment for the timeline block */
+  }
+  
   .timeline-content h4 {
     font-size: 16px;
     font-weight: 700;
@@ -3060,6 +3064,7 @@ code, pre, .mono {
   .timeline-badges {
     display: flex;
     flex-wrap: wrap;
+    justify-content: flex-start;
     gap: 8px;
     margin-top: 10px;
   }
