@@ -291,29 +291,32 @@ async function main() {
     // Update database with results
     console.log('\n💾 Updating database...');
     
-    if (result.results) {
-      for (const res of result.results) {
-        const cveId = res.url.split('/').pop();
-        if (cveId && res.success) {
+    // Update successfully indexed CVEs
+    for (const url of urls) {
+      const cveId = url.split('/').pop();
+      if (cveId) {
+        // Check if this URL was in the errors list
+        const hasError = result.errors.some((err: any) => 
+          (typeof err === 'object' && err.url === url) || 
+          (typeof err === 'string' && err.includes(url))
+        );
+        if (!hasError) {
           await updateIndexingStatus(cveId, 'indexed');
+        } else {
+          await updateIndexingStatus(cveId, 'failed');
         }
       }
     }
 
-    if (result.errors) {
-      for (const err of result.errors) {
-        const cveId = err.url.split('/').pop();
-        if (cveId) {
-          await updateIndexingStatus(cveId, 'failed');
-        }
-      }
-
-      if (result.errors.length > 0) {
-        console.log('\n⚠️  Errors (first 5):');
-        result.errors.slice(0, 5).forEach((err: any) => {
+    if (result.errors && result.errors.length > 0) {
+      console.log('\n⚠️  Errors (first 5):');
+      result.errors.slice(0, 5).forEach((err: any) => {
+        if (typeof err === 'object') {
           console.log(`   - ${err.url}: ${err.error}`);
-        });
-      }
+        } else {
+          console.log(`   - ${err}`);
+        }
+      });
     }
 
     // Check remaining quota
