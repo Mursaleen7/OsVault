@@ -1,0 +1,8 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/smart-indexing",
+      "schedule": "0 2 * * *"
+    }
+  ]
+}
