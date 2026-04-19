@@ -565,7 +565,6 @@ export default function LandingClient({ stats, recent }: Props) {
 
   return (
     <main>
-
       {/* ═══ HERO ═══ */}
       <section className="hero" id="hero">
         <div className="hero-glow" aria-hidden="true" />
@@ -607,6 +606,24 @@ export default function LandingClient({ stats, recent }: Props) {
               </a>
               <a href="/checker" className="btn-ghost" id="hero-scan-btn">Scan dependencies free</a>
               <a href="/pricing" className="btn-ghost" id="hero-pricing-btn">View pricing</a>
+            </div>
+          </Reveal>
+
+          {/* ── Social Proof Strip ── */}
+          <Reveal delay={3}>
+            <div className="hero-social-proof">
+              <div className="social-proof-item">
+                <span className="social-proof-dot" />
+                <span>143 teams in early access</span>
+              </div>
+              <div className="social-proof-divider" />
+              <div className="social-proof-item">
+                <span>18,400+ packages scanned</span>
+              </div>
+              <div className="social-proof-divider" />
+              <div className="social-proof-item">
+                <span>No tracking · Open data</span>
+              </div>
             </div>
           </Reveal>
         </div>

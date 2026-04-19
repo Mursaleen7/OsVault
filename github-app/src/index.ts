@@ -5,6 +5,7 @@ import express from "express";
 import { App } from "@octokit/app";
 import { checkPackages } from "./supabase";
 import { parseDiff, DEP_FILES } from "./diff";
+import { parseLockfile, LOCKFILE_NAMES } from "./lockfile";
 import { postCheckRun } from "./checks";
 import { isOverLimit, recordUsage } from "./usage";
 import { analyzeReachability } from "./reachability";
@@ -98,14 +99,53 @@ app.post("/webhook", async (req, res) => {
         console.log(`  Parsed ${parsed.length} packages from ${f.filename}`);
         return parsed;
       });
-      console.log(`  Packages extracted: ${packages.length}`);
+      console.log(`  Packages extracted from diff: ${packages.length}`);
       if (packages.length === 0) {
         console.log(`  ⏭️  No packages found in diff, skipping check`);
         return;
       }
 
+      // ── Step 0.5: Lockfile resolution (full transitive tree) ─────────
+      // Fetch lockfiles from the repo at the HEAD SHA to capture ALL deps,
+      // not just those changed in this PR's diff.
+      let lockfileDeps: { name: string; version: string; ecosystem: "npm" | "PyPI" | "Go" | "Maven" | "Cargo"; depth: number }[] = [];
+      try {
+        for (const lockName of LOCKFILE_NAMES) {
+          try {
+            const { data: fileData } = await (octokit as any).request(
+              "GET /repos/{owner}/{repo}/contents/{path}",
+              { owner, repo, path: lockName, ref: headSha }
+            );
+
+            if (fileData && fileData.content) {
+              const content = Buffer.from(fileData.content, "base64").toString("utf-8");
+              const resolved = parseLockfile(lockName, content);
+              if (resolved.length > 0) {
+                lockfileDeps = resolved;
+                console.log(`  📦 Parsed ${resolved.length} deps from ${lockName} (depths 0-${Math.max(...resolved.map(d => d.depth))})`);
+                break; // Use the first lockfile found
+              }
+            }
+          } catch {
+            // File not found in repo — try next lockfile type
+            continue;
+          }
+        }
+      } catch (err) {
+        console.warn(`  ⚠️ Lockfile resolution failed, continuing with diff-only scan:`, err);
+      }
+
+      // Merge: diff packages (direct changes) + lockfile packages (full tree)
+      // Diff packages take priority (more specific version from the PR)
+      const diffPkgNames = new Set(packages.map(p => p.name.toLowerCase()));
+      const mergedPackages = [
+        ...packages,
+        ...lockfileDeps.filter(ld => !diffPkgNames.has(ld.name.toLowerCase())),
+      ];
+      console.log(`  Total packages for scanning: ${mergedPackages.length} (${packages.length} from diff + ${mergedPackages.length - packages.length} transitive from lockfile)`);
+
       // ── Step 1: Check Supabase for known vulnerabilities ──────────────
-      const vulns = await checkPackages(packages);
+      const vulns = await checkPackages(mergedPackages);
 
       // ── Step 2: Reachability analysis ─────────────────────────────────
       // Only analyse reachability if we actually found vulnerabilities
@@ -154,7 +194,7 @@ app.post("/webhook", async (req, res) => {
         repo,
         headSha,
         vulns,
-        packages.length,
+        mergedPackages.length,
         false,
         installationId
       );

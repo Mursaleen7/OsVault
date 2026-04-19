@@ -22,7 +22,7 @@ export interface VulnMatch {
 }
 
 export async function checkPackages(
-  packages: { name: string; version: string; ecosystem: "npm" | "PyPI" }[]
+  packages: { name: string; version: string; ecosystem: "npm" | "PyPI" | "Go" | "Maven" | "Cargo" }[]
 ): Promise<VulnMatch[]> {
   if (packages.length === 0) return [];
 
