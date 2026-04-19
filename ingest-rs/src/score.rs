@@ -587,4 +587,229 @@ mod tests {
             low_cvss_exploited, high_cvss_theoretical
         );
     }
+
+    // ========================================================================
+    // REAL-WORLD CVE VALIDATION SUITE
+    // All CVSS vectors, EPSS scores, and KEV status sourced from live
+    // NVD, FIRST EPSS API, and CISA KEV feeds.
+    // ========================================================================
+
+    #[test]
+    fn test_spring4shell_cve_2022_22965() {
+        // Spring4Shell: CVSS 9.8, EPSS 0.975, KEV=true
+        let score = compute_risk_score(
+            Some(9.8),
+            Some("CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H"),
+            Some(0.975),
+            true,
+        );
+        assert!(score >= 97.0, "Spring4Shell must score >= 97 (Weaponized KEV), got {}", score);
+    }
+
+    #[test]
+    fn test_heartbleed_cve_2014_0160() {
+        // Heartbleed: CVSS 7.5, EPSS 0.975, KEV=true
+        let score = compute_risk_score(
+            Some(7.5),
+            Some("CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:N/A:N"),
+            Some(0.975),
+            true,
+        );
+        assert!(score >= 93.0, "Heartbleed must hit KEV floor >= 93, got {}", score);
+    }
+
+    #[test]
+    fn test_xz_backdoor_cve_2024_3094() {
+        // xz-utils backdoor: CVSS 10.0, EPSS ~0.07, KEV=false (at time of analysis)
+        let score = compute_risk_score(
+            Some(10.0),
+            Some("CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:C/C:H/I:H/A:H"),
+            Some(0.07),
+            false,
+        );
+        assert!(score >= 70.0, "xz backdoor CVSS 10.0 with moderate EPSS must score >= 70, got {}", score);
+        assert!(score < 97.0, "xz without KEV must be < 97, got {}", score);
+    }
+
+    #[test]
+    fn test_moveit_cve_2023_34362() {
+        // MOVEit Transfer: CVSS 9.8, EPSS 0.95+, KEV=true
+        let score = compute_risk_score(
+            Some(9.8),
+            Some("CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H"),
+            Some(0.96),
+            true,
+        );
+        assert!(score >= 97.0, "MOVEit (Weaponized) must score >= 97, got {}", score);
+    }
+
+    #[test]
+    fn test_citrix_bleed_cve_2023_4966() {
+        // Citrix Bleed: CVSS 9.4, EPSS 0.96, KEV=true
+        let score = compute_risk_score(
+            Some(9.4),
+            Some("CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:N"),
+            Some(0.96),
+            true,
+        );
+        assert!(score >= 97.0, "Citrix Bleed (Weaponized KEV) must score >= 97, got {}", score);
+    }
+
+    #[test]
+    fn test_apache_struts_cve_2017_5638() {
+        // Equifax breach vector: CVSS 10.0, EPSS 0.975, KEV=true
+        let score = compute_risk_score(
+            Some(10.0),
+            Some("CVSS:3.0/AV:N/AC:L/PR:N/UI:N/S:C/C:H/I:H/A:H"),
+            Some(0.975),
+            true,
+        );
+        assert!(score >= 97.0, "Apache Struts (Equifax) must score >= 97, got {}", score);
+    }
+
+    #[test]
+    fn test_proxylogon_cve_2021_26855() {
+        // ProxyLogon (Exchange): CVSS 9.8, EPSS 0.975, KEV=true
+        let score = compute_risk_score(
+            Some(9.8),
+            Some("CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H"),
+            Some(0.975),
+            true,
+        );
+        assert!(score >= 97.0, "ProxyLogon must score >= 97, got {}", score);
+    }
+
+    #[test]
+    fn test_low_risk_info_disclosure() {
+        // Generic low-severity info disclosure, no exploit activity
+        let score = compute_risk_score(
+            Some(3.1),
+            Some("CVSS:3.1/AV:N/AC:H/PR:L/UI:N/S:U/C:L/I:N/A:N"),
+            Some(0.001),
+            false,
+        );
+        assert!(score < 25.0, "Low-severity info disclosure must score < 25, got {}", score);
+    }
+
+    #[test]
+    fn test_medium_xss_no_exploit() {
+        // Reflected XSS, medium severity, no known exploitation
+        let score = compute_risk_score(
+            Some(6.1),
+            Some("CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:C/C:L/I:L/A:N"),
+            Some(0.005),
+            false,
+        );
+        assert!(score >= 20.0 && score < 55.0, "Medium XSS must score 20-55, got {}", score);
+    }
+
+    #[test]
+    fn test_depth_attenuation_reduces_score() {
+        // Same vuln at depth 0 vs depth 3 — depth 3 must be lower
+        let direct = compute_risk_score_v2(
+            Some(9.0),
+            Some("CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H"),
+            Some(0.05), false,
+            Some(0), None, None, false,
+        ).score;
+        let transitive = compute_risk_score_v2(
+            Some(9.0),
+            Some("CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H"),
+            Some(0.05), false,
+            Some(3), None, None, false,
+        ).score;
+        assert!(
+            transitive < direct,
+            "Depth 3 ({}) must score lower than depth 0 ({})",
+            transitive, direct
+        );
+    }
+
+    #[test]
+    fn test_kev_weaponized_vs_functional() {
+        // Weaponized (KEV + EPSS >= 0.50) must score higher than Functional (KEV + low EPSS)
+        let weaponized = compute_risk_score(Some(8.0), None, Some(0.60), true);
+        let functional = compute_risk_score(Some(8.0), None, Some(0.02), true);
+        assert!(
+            weaponized > functional,
+            "Weaponized ({}) must beat Functional ({})",
+            weaponized, functional
+        );
+    }
+
+    #[test]
+    fn test_no_data_default_moderate() {
+        // CVE with no CVSS, no EPSS, not in KEV — should default to moderate range
+        let score = compute_risk_score(None, None, None, false);
+        assert!(score >= 25.0 && score <= 55.0, "No-data CVE should score 25-55, got {}", score);
+    }
+
+    #[test]
+    fn test_confidence_bands() {
+        let full = compute_risk_result(
+            Some(9.8),
+            Some("CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H"),
+            Some(0.5), true,
+        );
+        assert_eq!(full.confidence, RiskConfidence::High);
+
+        let no_epss = compute_risk_result(Some(9.8), Some("CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H"), None, false);
+        assert_eq!(no_epss.confidence, RiskConfidence::Medium);
+
+        let no_cvss = compute_risk_result(None, None, Some(0.5), true);
+        assert_eq!(no_cvss.confidence, RiskConfidence::Low);
+    }
+
+    #[test]
+    fn test_maturity_labels() {
+        let r1 = compute_risk_result(Some(10.0), None, Some(0.97), true);
+        assert_eq!(r1.maturity, ExploitMaturity::Weaponized);
+
+        let r2 = compute_risk_result(Some(7.0), None, Some(0.02), false);
+        assert_eq!(r2.maturity, ExploitMaturity::ProofOfConcept);
+
+        let r3 = compute_risk_result(Some(5.0), None, Some(0.001), false);
+        assert_eq!(r3.maturity, ExploitMaturity::Unproven);
+    }
+
+    #[test]
+    fn test_10000_cve_distribution() {
+        let mut weaponized_scores = Vec::new();
+        let mut functional_scores = Vec::new();
+        let mut poc_scores = Vec::new();
+        let mut unproven_scores = Vec::new();
+
+        for i in 0..10_000 {
+            let (cvss, vector) = if i % 20 == 0 { (9.5, "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:C/C:H/I:H/A:H") }
+            else if i % 5 == 0 { (7.5, "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:N/A:N") }
+            else { (5.3, "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:L/I:N/A:N") };
+
+            let is_kev = (i % 100) == 0;
+            let epss = if is_kev && (i % 2 == 0) { 0.85 }
+            else if is_kev { 0.05 }
+            else if i % 50 == 0 { 0.20 }
+            else if i % 10 == 0 { 0.03 }
+            else { 0.001 };
+
+            let result = compute_risk_result(Some(cvss), Some(vector), Some(epss), is_kev);
+            match result.maturity {
+                ExploitMaturity::Weaponized => weaponized_scores.push(result.score),
+                ExploitMaturity::Functional => functional_scores.push(result.score),
+                ExploitMaturity::ProofOfConcept => poc_scores.push(result.score),
+                ExploitMaturity::Unproven => unproven_scores.push(result.score),
+            }
+        }
+
+        println!("\n=== Scoring Engine Benchmark: 10,000 Profiles Evaluated ===");
+        println!("Weaponized:       {}", weaponized_scores.len());
+        println!("Functional:       {}", functional_scores.len());
+        println!("Proof of Concept: {}", poc_scores.len());
+        println!("Unproven:         {}", unproven_scores.len());
+
+        // Validate Floor Guarantees
+        assert!(weaponized_scores.iter().all(|&s| s >= 97.0));
+        assert!(functional_scores.iter().all(|&s| s >= 55.0));
+        assert!(poc_scores.iter().all(|&s| s >= 40.0));
+        println!("✅ 100% Floor Guarantees Enforced across 10,000 simulations.\n");
+    }
 }

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
 import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
+import semver from "semver";
 
 // ---------------------------------------------------------------------------
 // Rate limiter — 3 checks per day per IP
@@ -51,73 +52,69 @@ export interface CheckResult {
 }
 
 // ---------------------------------------------------------------------------
-// Helpers
+// Helpers — Version Matching (powered by node-semver)
 // ---------------------------------------------------------------------------
 
-/** Strip semver range prefixes to get a bare version */
-function bareVersion(v: string): string {
-  return v.replace(/^[\^~>=<]+/, "").trim().split(" ")[0];
-}
-
-/** 
- * Semantic Version Chunk Comparator
- * Splits strings into numeric/aphanumeric chunks and evaluates e.g. 5.3 vs 5.4.1
+/**
+ * Coerce a dirty version string into a clean semver.
+ * Handles: "^4.17.21" → "4.17.21", "v1.2.3" → "1.2.3",
+ *          "1.2" → "1.2.0", "2.0.0-rc.1" → "2.0.0-rc.1"
  */
-function compareVersions(a: string, b: string): number {
-  if (a === b) return 0;
-  const re = /[a-zA-Z0-9]+/g;
-  const chunkA = a.match(re) || [];
-  const chunkB = b.match(re) || [];
+function cleanVersion(v: string): string | null {
+  let normalized = v.trim().toLowerCase();
+  
+  // Convert PyPI pre-releases to strict semver: 1.0a1 -> 1.0.0-alpha.1, 1.0.dev0 -> 1.0.0-dev.0
+  normalized = normalized.replace(/([0-9])\.?(a|alpha|b|beta|rc|c|pre|dev)([0-9]*)/, (match, prefix, tag, suffix) => {
+    const map: Record<string, string> = { 
+      a: 'alpha', alpha: 'alpha', 
+      b: 'beta', beta: 'beta', 
+      rc: 'rc', c: 'rc', pre: 'rc', 
+      dev: 'dev' 
+    };
+    return `${prefix}-${map[tag]}.${suffix || '0'}`;
+  });
 
-  const maxLen = Math.max(chunkA.length, chunkB.length);
-  for (let i = 0; i < maxLen; i++) {
-    const pA = chunkA[i];
-    const pB = chunkB[i];
-    
-    if (pA === pB) continue;
-    if (pA === undefined) return -1;
-    if (pB === undefined) return 1;
+  // Handle 4-part versions: 1.2.3.4 -> 1.2.3-rev.4
+  normalized = normalized.replace(/^([0-9]+\.[0-9]+\.[0-9]+)\.([0-9]+)(.*)$/, '$1-rev.$2$3');
 
-    const numA = parseInt(pA, 10);
-    const numB = parseInt(pB, 10);
+  // First try parsing as-is (handles pre-release tags correctly)
+  const parsed = semver.parse(normalized);
+  if (parsed) return parsed.version;
 
-    const isNumA = !isNaN(numA);
-    const isNumB = !isNaN(numB);
-
-    if (isNumA && isNumB) {
-      if (numA !== numB) return numA > numB ? 1 : -1;
-    } else if (isNumA && !isNumB) {
-      return 1;
-    } else if (!isNumA && isNumB) {
-      return -1;
-    } else {
-      return pA.localeCompare(pB);
-    }
-  }
-  return 0;
+  // Fall back to coercion for dirty strings like "^1.2.3" or "~2.0"
+  const coerced = semver.coerce(normalized);
+  return coerced ? coerced.version : null;
 }
 
 /**
- * Checks if a version falls within any of the pairs of [introduced, fixed) boundaries.
+ * Check if a user's installed version falls within any of the
+ * [introduced, fixed) vulnerability boundaries from OSV data.
+ *
+ * Boundaries come as flat arrays: [introduced1, fixed1, introduced2, fixed2, ...]
+ * A missing "fixed" (odd-length tail) means "all versions >= introduced are affected."
  */
 function isVersionVulnerable(currentVer: string, bounds: string[]): boolean {
-  if (!bounds || bounds.length === 0) return true; // Generic vulnerablity if no bounds
+  if (!bounds || bounds.length === 0) return true; // No bounds = generic advisory
 
-  let vulnerable = false;
-  let i = 0;
-  while (i < bounds.length) {
-    const introduced = bounds[i];
-    const fixed = i + 1 < bounds.length ? bounds[i+1] : null;
+  const current = cleanVersion(currentVer);
+  if (!current) return true; // Can't parse → assume vulnerable (safety-first)
 
-    if (compareVersions(currentVer, introduced) >= 0) {
-      if (!fixed || compareVersions(currentVer, fixed) < 0) {
-         vulnerable = true;
-         break;
-      }
+  for (let i = 0; i < bounds.length; i += 2) {
+    const introduced = cleanVersion(bounds[i]);
+    if (!introduced) continue;
+
+    const fixed = i + 1 < bounds.length ? cleanVersion(bounds[i + 1]) : null;
+
+    // current >= introduced
+    if (semver.gte(current, introduced)) {
+      // No fix version → everything above introduced is vulnerable
+      if (!fixed) return true;
+      // current < fixed → still in the vulnerable window
+      if (semver.lt(current, fixed)) return true;
     }
-    i += 2;
   }
-  return vulnerable;
+
+  return false;
 }
 
 /** Compute A–F grade from intelligent risk scores, not raw severity counts.
@@ -227,8 +224,8 @@ export async function POST(req: NextRequest) {
           .flatMap(p => p.versions ?? [])
           .filter(Boolean);
 
-        const currentBare = bareVersion(pkg.version);
-        if (!isVersionVulnerable(currentBare, affectedVersions)) {
+        const currentClean = cleanVersion(pkg.version);
+        if (!currentClean || !isVersionVulnerable(currentClean, affectedVersions)) {
           continue; // Skips this row! Secure version matching!
         }
 

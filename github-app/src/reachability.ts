@@ -22,6 +22,7 @@
  */
 
 import type { Octokit } from "@octokit/core";
+import { buildGoImportPatterns, buildJavaImportPatterns, buildRustImportPatterns } from "./polyglot-patterns";
 import * as tar from "tar-stream";
 import gunzip from "gunzip-maybe";
 import { Readable } from "stream";
@@ -57,6 +58,10 @@ const SOURCE_EXTENSIONS = new Set([
   ".vue",
   ".svelte",
   ".py",       // Python ecosystem support
+  ".go",       // Go ecosystem support
+  ".java",     // Java ecosystem support
+  ".kt",       // Kotlin (JVM) support
+  ".rs",       // Rust ecosystem support
 ]);
 
 /** Directories inside the tarball we skip entirely. */
@@ -73,6 +78,9 @@ const SKIP_DIRS = [
   "vendor/",
   "coverage/",
   ".cache/",
+  "target/",        // Rust build output
+  ".gradle/",       // Gradle caches
+  ".mvn/",          // Maven wrapper cache
 ];
 
 /** Maximum tarball size we will download (200 MB). */
@@ -120,6 +128,11 @@ function buildImportPatterns(pkgName: string): RegExp[] {
     new RegExp(`^\\s*import\\s+${escaped}\\b`, "m"),
     // Python: from pkg import ...
     new RegExp(`^\\s*from\\s+${escaped}\\b`, "m"),
+  
+    // ── Go / Java / Rust ────────────────────────────────────────────
+    ...buildGoImportPatterns(escaped),
+    ...buildJavaImportPatterns(escaped),
+    ...buildRustImportPatterns(escaped),
   ];
 }
 
@@ -161,6 +174,47 @@ function isSourceFile(filePath: string): boolean {
  */
 function cleanPath(filePath: string): string {
   return filePath.replace(/^[^/]+\//, "");
+}
+
+/**
+ * Strip comments and string literal contents to reduce false positives.
+ *
+ * Prevents matching package names that appear in:
+ *   - Single-line comments (JS/TS/Python/Ruby)
+ *   - Block comments
+ *   - Python triple-quoted docstrings
+ *   - Non-import string literal bodies
+ *
+ * Replaces stripped content with whitespace to preserve line count.
+ * Conservative: only strips content that cannot be an import statement.
+ */
+function stripCommentsAndStrings(source: string): string {
+  return source
+    // 1. Multi-line comments: /* ... */
+    .replace(/\/\*[\s\S]*?\*\//g, (m) => " ".repeat(m.length))
+    // 2. Single-line comments: // ... (but not URLs like https://)
+    .replace(/(?<!:)\/\/.*$/gm, (m) => " ".repeat(m.length))
+    // 3. Python/Ruby single-line comments: # ...
+    .replace(/(?<=^|\s)#.*$/gm, (m) => " ".repeat(m.length))
+    // 4. Python triple-quoted docstrings
+    .replace(/"""[\s\S]*?"""/g, (m) => " ".repeat(m.length))
+    .replace(/'''[\s\S]*?'''/g, (m) => " ".repeat(m.length))
+    // 5. String literal contents (double-quote) — keep the quotes, blank the body
+    //    Skip strings that look like import paths (contain / or start with @)
+    .replace(/"([^"\\]|\\.)*"/g, (m) => {
+      // Preserve strings that look like import specifiers
+      if (/^"[@a-z]/.test(m) && (m.includes('/') || /^"@/.test(m) || /^"[a-z][a-z0-9._-]*"$/i.test(m))) {
+        return m; // Keep — this is likely an import path
+      }
+      return '"' + ' '.repeat(Math.max(0, m.length - 2)) + '"';
+    })
+    // Same for single-quoted strings
+    .replace(/'([^'\\]|\\.)*'/g, (m) => {
+      if (/^'[@a-z]/.test(m) && (m.includes('/') || /^'@/.test(m) || /^'[a-z][a-z0-9._-]*'$/i.test(m))) {
+        return m;
+      }
+      return "'" + ' '.repeat(Math.max(0, m.length - 2)) + "'";
+    });
 }
 
 // ---------------------------------------------------------------------------
@@ -261,7 +315,8 @@ export async function analyzeReachability(
             return;
           }
 
-          const content = Buffer.concat(chunks).toString("utf-8");
+          const rawContent = Buffer.concat(chunks).toString("utf-8");
+          const content = stripCommentsAndStrings(rawContent);
           const cleanFilePath = cleanPath(filePath);
 
           // Check each remaining package against this file's contents

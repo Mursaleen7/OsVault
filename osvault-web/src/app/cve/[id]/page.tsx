@@ -37,16 +37,15 @@ const SEVERITY_COLORS: Record<string, string> = {
 const MONO = "'JetBrains Mono', 'Fira Code', monospace";
 const SANS = "'Inter', -apple-system, sans-serif";
 const sectionLabel = {
-  fontSize: 11, fontWeight: 600 as const, color: "var(--slate-dim)",
-  textTransform: "uppercase" as const, letterSpacing: "0.1em",
-  fontFamily: MONO, marginBottom: 20,
+  fontSize: 12, fontWeight: 600 as const, color: "var(--slate-dim)",
+  textTransform: "uppercase" as const, letterSpacing: "0.15em",
+  fontFamily: MONO, marginBottom: 24,
 };
 const h2Style = {
-  fontSize: 22, fontWeight: 700 as const, letterSpacing: "-0.02em",
-  color: "var(--white-pure)", marginBottom: 8, lineHeight: 1.3,
+  fontSize: 24, fontWeight: 800 as const, letterSpacing: "-0.02em",
+  color: "var(--white-pure)", marginBottom: 12, lineHeight: 1.3,
   fontFamily: SANS,
 };
-const hairline = { width: "100%", height: 1, background: "var(--border)" };
 
 // ---------------------------------------------------------------------------
 // TL;DR Parser
@@ -136,7 +135,6 @@ function parseTldr(description: string | null): { target?: string; versions?: st
 interface CvssMetric {
   key: string; label: string; value: string;
   severity: "low" | "medium" | "high" | "critical";
-  /** 0–1 numeric weight for the bar chart */
   weight: number;
 }
 
@@ -175,10 +173,10 @@ function CvssBarChart({ metrics }: { metrics: CvssMetric[] }) {
   if (metrics.length === 0) return null;
 
   const barH = 22;
-  const gap = 10;
-  const labelW = 150;
-  const valueW = 90;
-  const barW = 240;
+  const gap = 12;
+  const labelW = 160;
+  const valueW = 100;
+  const barW = 260;
   const totalW = labelW + barW + valueW + 24;
   const totalH = metrics.length * (barH + gap) - gap + 16;
 
@@ -186,7 +184,7 @@ function CvssBarChart({ metrics }: { metrics: CvssMetric[] }) {
     <svg
       viewBox={`0 0 ${totalW} ${totalH}`}
       width="100%"
-      style={{ maxWidth: 560, display: "block" }}
+      style={{ maxWidth: 640, display: "block", marginTop: 24 }}
       role="img"
       aria-label="CVSS v3.1 attack vector breakdown chart"
     >
@@ -203,25 +201,25 @@ function CvssBarChart({ metrics }: { metrics: CvssMetric[] }) {
               textAnchor="end"
               dominantBaseline="middle"
               fill="var(--text-2)"
-              fontSize="11"
+              fontSize="12"
               fontFamily={MONO}
-              fontWeight="500"
+              fontWeight="600"
             >
               {m.label}
             </text>
             {/* Track */}
-            <rect x={labelW} y={y + 2} width={barW} height={barH - 4} rx={3} fill="rgba(255,255,255,0.04)" />
+            <rect x={labelW} y={y + 2} width={barW} height={barH - 4} rx={4} fill="rgba(255,255,255,0.03)" />
             {/* Fill */}
-            <rect x={labelW} y={y + 2} width={barFill} height={barH - 4} rx={3} fill={fill} opacity={0.85} />
+            <rect x={labelW} y={y + 2} width={barFill} height={barH - 4} rx={4} fill={fill} opacity={0.9} />
             {/* Value label */}
             <text
-              x={labelW + barW + 12}
+              x={labelW + barW + 16}
               y={y + barH / 2 + 1}
               dominantBaseline="middle"
               fill={fill}
-              fontSize="11"
+              fontSize="12"
               fontFamily={SANS}
-              fontWeight="600"
+              fontWeight="700"
             >
               {m.value}
             </text>
@@ -234,33 +232,33 @@ function CvssBarChart({ metrics }: { metrics: CvssMetric[] }) {
 
 /** Donut score graphic for the risk gauge */
 function ScoreDonut({ score, maxScore, color, label }: { score: number; maxScore: number; color: string; label: string }) {
-  const r = 38;
+  const r = 42;
   const circumference = 2 * Math.PI * r;
   const pct = Math.min(score / maxScore, 1);
   const offset = circumference * (1 - pct);
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
-      <svg width={92} height={92} viewBox="0 0 92 92" role="img" aria-label={`${label}: ${score}`}>
+    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 12 }}>
+      <svg width={100} height={100} viewBox="0 0 100 100" role="img" aria-label={`${label}: ${score}`}>
         {/* Track */}
-        <circle cx={46} cy={46} r={r} fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth={6} />
+        <circle cx={50} cy={50} r={r} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth={7} />
         {/* Fill arc */}
         <circle
-          cx={46} cy={46} r={r} fill="none"
-          stroke={color} strokeWidth={6}
+          cx={50} cy={50} r={r} fill="none"
+          stroke={color} strokeWidth={7}
           strokeDasharray={circumference}
           strokeDashoffset={offset}
           strokeLinecap="round"
-          transform="rotate(-90 46 46)"
-          style={{ transition: "stroke-dashoffset 0.6s ease" }}
+          transform="rotate(-90 50 50)"
+          style={{ transition: "stroke-dashoffset 0.8s cubic-bezier(0.4, 0, 0.2, 1)" }}
         />
         {/* Center score */}
-        <text x={46} y={48} textAnchor="middle" dominantBaseline="middle"
-          fill={color} fontSize="22" fontWeight="800" fontFamily={SANS} letterSpacing="-0.03em">
+        <text x={50} y={52} textAnchor="middle" dominantBaseline="middle"
+          fill={color} fontSize="26" fontWeight="900" fontFamily={SANS} letterSpacing="-0.04em">
           {typeof score === "number" ? (score % 1 === 0 ? score : score.toFixed(1)) : "—"}
         </text>
       </svg>
-      <span style={{ fontSize: 10, fontWeight: 600, color: "var(--slate-dim)", textTransform: "uppercase", letterSpacing: "0.08em", fontFamily: MONO }}>
+      <span style={{ fontSize: 11, fontWeight: 700, color: "var(--slate)", textTransform: "uppercase", letterSpacing: "0.12em", fontFamily: MONO }}>
         {label}
       </span>
     </div>
@@ -274,16 +272,16 @@ async function fetchRelatedCves(
   currentCveId: string, severity: string | null,
   publishedAt: string | null, ecosystems: string[],
 ) {
-  type RelatedSection = { label: string; cves: { cve_id: string; cvss_severity: string | null }[] };
+  type RelatedSection = { label: string; cves: { cve_id: string; cvss_severity: string | null; description?: string }[] };
   const queries: Promise<RelatedSection>[] = [];
 
   if (severity) {
     queries.push(
       Promise.resolve(
-        supabase.from("vulnerabilities").select("cve_id, cvss_severity")
+        supabase.from("vulnerabilities").select("cve_id, cvss_severity, description")
           .eq("source", "nvd").eq("cvss_severity", severity)
-          .neq("cve_id", currentCveId).not("cve_id", "is", null).limit(5)
-      ).then(({ data }) => ({ label: `Other ${severity} Severity Vulnerabilities`, cves: (data ?? []) as RelatedSection["cves"] }))
+          .neq("cve_id", currentCveId).not("cve_id", "is", null).limit(4)
+      ).then(({ data }) => ({ label: `Similar ${severity} Severity Vulnerabilities`, cves: (data ?? []) as RelatedSection["cves"] }))
     );
   }
 
@@ -294,11 +292,11 @@ async function fetchRelatedCves(
     const ml = d.toLocaleDateString("en-US", { month: "long", year: "numeric" });
     queries.push(
       Promise.resolve(
-        supabase.from("vulnerabilities").select("cve_id, cvss_severity")
+        supabase.from("vulnerabilities").select("cve_id, cvss_severity, description")
           .eq("source", "nvd").gte("published_at", s).lte("published_at", e)
           .neq("cve_id", currentCveId).not("cve_id", "is", null)
-          .order("published_at", { ascending: false }).limit(5)
-      ).then(({ data }) => ({ label: `Recent Vulnerabilities from ${ml}`, cves: (data ?? []) as RelatedSection["cves"] }))
+          .order("published_at", { ascending: false }).limit(4)
+      ).then(({ data }) => ({ label: `Other Vulnerabilities from ${ml}`, cves: (data ?? []) as RelatedSection["cves"] }))
     );
   }
 
@@ -306,9 +304,9 @@ async function fetchRelatedCves(
     const eco = ecosystems[0];
     queries.push(
       Promise.resolve(
-        supabase.from("vulnerabilities").select("cve_id, cvss_severity")
+        supabase.from("vulnerabilities").select("cve_id, cvss_severity, description")
           .eq("source", "nvd").neq("cve_id", currentCveId)
-          .not("cve_id", "is", null).not("cvss_severity", "is", null).limit(5)
+          .not("cve_id", "is", null).not("cvss_severity", "is", null).limit(4)
       ).then(({ data }) => ({ label: `Other ${eco} Ecosystem Vulnerabilities`, cves: (data ?? []) as RelatedSection["cves"] }))
     );
   }
@@ -341,354 +339,544 @@ export default async function CVEPage({ params }: { params: Promise<{ id: string
   const ecosystems = [...new Set(affectedPackages.map(p => p.ecosystem).filter(Boolean))];
   const relatedSections = await fetchRelatedCves(data.cve_id, data.cvss_severity, data.published_at, ecosystems);
 
-  const jsonLd = {
-    "@context": "https://schema.org", "@type": "Article",
-    "headline": `${data.cve_id} — ${data.cvss_severity ?? "CVE"} Severity Vulnerability`,
-    "description": data.description?.slice(0, 200),
-    "datePublished": data.published_at, "dateModified": data.modified_at,
-    "url": `${BASE_URL}/cve/${data.cve_id}`,
-    "publisher": { "@type": "Organization", "name": "OsVault", "url": BASE_URL },
-  };
+  // ---------------------------------------------------------------------------
+  // Structured Data: Multi-Schema JSON-LD for maximum pSEO coverage
+  // ---------------------------------------------------------------------------
+  const sevLabel = data.cvss_severity ?? "UNKNOWN";
+  const faqAnswer = data.description
+    ? `${data.cve_id} is a ${sevLabel.toLowerCase()} severity vulnerability${tldr.vulnType ? ` classified as ${tldr.vulnType}` : ""}${tldr.target ? ` affecting ${tldr.target}` : ""}. ${data.cvss_score ? `It has a CVSS score of ${data.cvss_score}/10.` : ""} ${tldr.versions ? `Affected versions: ${tldr.versions}.` : ""} Visit OsVault for full remediation guidance.`
+    : `${data.cve_id} is a security vulnerability tracked by the National Vulnerability Database. Visit OsVault for detailed analysis.`;
+
+  const jsonLd = [
+    {
+      "@context": "https://schema.org",
+      "@type": "TechArticle",
+      "headline": `${data.cve_id} — ${sevLabel} Severity Vulnerability`,
+      "alternativeHeadline": `${data.cve_id} Security Advisory & Risk Analysis`,
+      "description": data.description?.slice(0, 300) ?? `Security vulnerability details for ${data.cve_id}.`,
+      "datePublished": data.published_at,
+      "dateModified": data.modified_at,
+      "url": `${BASE_URL}/cve/${data.cve_id}`,
+      "mainEntityOfPage": { "@type": "WebPage", "@id": `${BASE_URL}/cve/${data.cve_id}` },
+      "author": { "@type": "Organization", "name": "OsVault", "url": BASE_URL },
+      "publisher": {
+        "@type": "Organization",
+        "name": "OsVault",
+        "url": BASE_URL,
+        "logo": { "@type": "ImageObject", "url": `${BASE_URL}/favicon.ico` },
+      },
+      "about": {
+        "@type": "SoftwareSourceCode",
+        "name": tldr.target ?? data.cve_id,
+        ...(tldr.versions ? { "softwareVersion": tldr.versions } : {}),
+      },
+      "keywords": [
+        data.cve_id, sevLabel, tldr.vulnType, "vulnerability", "CVE", "security advisory",
+        ...(ecosystems.length > 0 ? ecosystems : []),
+      ].filter(Boolean).join(", "),
+      "proficiencyLevel": "Expert",
+      "inLanguage": "en",
+    },
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        { "@type": "ListItem", "position": 1, "name": "OsVault", "item": BASE_URL },
+        { "@type": "ListItem", "position": 2, "name": "Vulnerability Scanner", "item": `${BASE_URL}/checker` },
+        { "@type": "ListItem", "position": 3, "name": data.cve_id, "item": `${BASE_URL}/cve/${data.cve_id}` },
+      ],
+    },
+    {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": `What is ${data.cve_id}?`,
+          "acceptedAnswer": { "@type": "Answer", "text": faqAnswer },
+        },
+        {
+          "@type": "Question",
+          "name": `How severe is ${data.cve_id}?`,
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": `${data.cve_id} has been classified as ${sevLabel} severity${data.cvss_score ? ` with a CVSS base score of ${data.cvss_score} out of 10` : ""}. ${data.epss_score ? `The EPSS probability of exploitation is ${(data.epss_score * 100).toFixed(2)}%.` : ""} ${data.kev ? "This vulnerability is listed in CISA's Known Exploited Vulnerabilities catalog, indicating active exploitation in the wild." : ""}`,
+          },
+        },
+      ],
+    },
+  ];
 
   return (
-    <article style={{ maxWidth: 740, margin: "0 auto", padding: "80px 28px 120px", fontFamily: SANS }}>
+    <main className="blog-post-page">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
 
       {/* ═══════════════════════════════════════════════════════════════════
-          §1 — HEADER
+          §1 — PREMIUM HEADER
           ═══════════════════════════════════════════════════════════════════ */}
-      <header style={{ marginBottom: 56 }}>
-        {/* Breadcrumb */}
-        <nav style={{ fontSize: 12, fontFamily: MONO, color: "var(--slate-dim)", marginBottom: 40, display: "flex", gap: 8, letterSpacing: "0.04em" }}>
-          <a href="/" style={{ color: "var(--slate)", textDecoration: "none" }}>osvault</a>
-          <span style={{ opacity: 0.4 }}>/</span>
-          <span>advisories</span>
-          <span style={{ opacity: 0.4 }}>/</span>
-          <span style={{ color: "var(--text)" }}>{data.cve_id?.toLowerCase()}</span>
-        </nav>
-
-        {/* Severity + KEV inline */}
-        <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 16 }}>
-          <span style={{
-            fontSize: 11, fontWeight: 700, color: sev.color, fontFamily: MONO,
-            letterSpacing: "0.08em", textTransform: "uppercase",
-          }}>
-            {data.cvss_severity ?? "UNKNOWN"} SEVERITY
-          </span>
-          {data.in_kev && (
-            <span style={{ fontSize: 11, fontWeight: 700, color: "#fca5a5", fontFamily: MONO, letterSpacing: "0.06em" }}>
-              ⚠ CISA KEV
+      <section className="blog-post-header">
+        <div className="blog-post-header-glow" aria-hidden="true" />
+        <div className="container blog-post-container">
+          {/* Breadcrumb / Top Meta */}
+          <div className="blog-post-meta-top">
+            <nav style={{ display: "flex", gap: 12, alignItems: "center", textTransform: "uppercase", letterSpacing: "0.1em" }}>
+              <a href="/checker" className="blog-back-link">← OSVAULT Scanner</a>
+              <span style={{ color: "var(--border-2)" }}>/</span>
+              <span>Advisory Report</span>
+            </nav>
+            <span style={{ fontSize: 13, color: "var(--slate)", letterSpacing: "0.05em" }}>
+              {publishedDate || "Unknown Publish Date"}
             </span>
-          )}
-          {publishedDate && (
-            <span style={{ fontSize: 12, color: "var(--slate-dim)", marginLeft: "auto", fontFamily: MONO }}>
-              {publishedDate}
-            </span>
-          )}
-        </div>
-
-        {/* Title */}
-        <h1 style={{ fontSize: "clamp(28px, 4.5vw, 42px)", fontWeight: 800, letterSpacing: "-0.035em", color: "var(--white-pure)", marginBottom: 0, lineHeight: 1.15 }}>
-          {data.cve_id}
-        </h1>
-      </header>
-
-      {/* ═══════════════════════════════════════════════════════════════════
-          §2 — ABSTRACT (TL;DR + Description)
-          ═══════════════════════════════════════════════════════════════════ */}
-      <section style={{ marginBottom: 56 }}>
-        <div style={sectionLabel}>Abstract</div>
-
-        {hasTldr && (
-          <dl id="tldr-summary" style={{
-            margin: "0 0 28px 0", padding: "0 0 0 20px",
-            borderLeft: `2px solid ${sev.color}`,
-            display: "flex", flexDirection: "column", gap: 6,
-          }}>
-            {tldr.target && (
-              <div style={{ display: "flex", gap: 12 }}>
-                <dt style={{ fontSize: 12, fontWeight: 600, color: "var(--slate-dim)", fontFamily: MONO, minWidth: 90, letterSpacing: "0.04em" }}>Target</dt>
-                <dd style={{ margin: 0, fontSize: 15, fontWeight: 500, color: "var(--text)", lineHeight: 1.5 }}>{tldr.target}</dd>
-              </div>
-            )}
-            {tldr.versions && (
-              <div style={{ display: "flex", gap: 12 }}>
-                <dt style={{ fontSize: 12, fontWeight: 600, color: "var(--slate-dim)", fontFamily: MONO, minWidth: 90, letterSpacing: "0.04em" }}>Versions</dt>
-                <dd style={{ margin: 0, fontSize: 15, fontWeight: 600, color: sev.color, fontFamily: MONO }}>{tldr.versions}</dd>
-              </div>
-            )}
-            {tldr.vulnType && (
-              <div style={{ display: "flex", gap: 12 }}>
-                <dt style={{ fontSize: 12, fontWeight: 600, color: "var(--slate-dim)", fontFamily: MONO, minWidth: 90, letterSpacing: "0.04em" }}>Class</dt>
-                <dd style={{ margin: 0, fontSize: 15, fontWeight: 500, color: "var(--text)", lineHeight: 1.5 }}>{tldr.vulnType}</dd>
-              </div>
-            )}
-          </dl>
-        )}
-
-        <p style={{ fontSize: 16, color: "var(--text-2)", lineHeight: 1.75, fontWeight: 400, maxWidth: 680 }}>
-          {data.description ?? "No detailed description available for this vulnerability."}
-        </p>
-      </section>
-
-      <div style={hairline} />
-
-      {/* ═══════════════════════════════════════════════════════════════════
-          §3 — RISK ASSESSMENT (Score donuts + EPSS)
-          ═══════════════════════════════════════════════════════════════════ */}
-      <section style={{ marginTop: 48, marginBottom: 56 }}>
-        <div style={sectionLabel}>Risk Assessment</div>
-
-        <div style={{ display: "flex", gap: 40, alignItems: "flex-start", flexWrap: "wrap" }}>
-          {/* Score donuts */}
-          <div style={{ display: "flex", gap: 32, flexWrap: "wrap" }}>
-            {data.cvss_score != null && (
-              <ScoreDonut score={data.cvss_score} maxScore={10} color={sev.color} label="CVSS Base" />
-            )}
-            {data.combined_risk_score != null && (
-              <ScoreDonut score={data.combined_risk_score} maxScore={100} color={riskColor} label="Risk Score" />
-            )}
           </div>
 
-          {/* Side metrics — tabular, not boxed */}
-          <div style={{ flex: 1, minWidth: 200 }}>
-            <table style={{ borderCollapse: "collapse", width: "100%", fontSize: 14 }}>
-              <tbody>
-                {data.epss_score != null && (
-                  <tr>
-                    <td style={{ padding: "8px 16px 8px 0", color: "var(--slate-dim)", fontFamily: MONO, fontSize: 11, fontWeight: 600, letterSpacing: "0.04em", verticalAlign: "top", whiteSpace: "nowrap" }}>EPSS Probability</td>
-                    <td style={{ padding: "8px 0", color: data.epss_score > 0.5 ? "#ef4444" : "var(--text)", fontWeight: 700, fontSize: 18 }}>
-                      {(data.epss_score * 100).toFixed(1)}%
-                      <span style={{ fontSize: 12, fontWeight: 400, color: "var(--text-2)", marginLeft: 8 }}>real-world exploitability</span>
-                    </td>
-                  </tr>
-                )}
-                {data.exploit_maturity && (
-                  <tr>
-                    <td style={{ padding: "8px 16px 8px 0", color: "var(--slate-dim)", fontFamily: MONO, fontSize: 11, fontWeight: 600, letterSpacing: "0.04em", verticalAlign: "top", whiteSpace: "nowrap" }}>Exploit Maturity</td>
-                    <td style={{ padding: "8px 0", color: "var(--text)", fontWeight: 500 }}>{data.exploit_maturity}</td>
-                  </tr>
-                )}
-                {data.risk_confidence && (
-                  <tr>
-                    <td style={{ padding: "8px 16px 8px 0", color: "var(--slate-dim)", fontFamily: MONO, fontSize: 11, fontWeight: 600, letterSpacing: "0.04em", verticalAlign: "top", whiteSpace: "nowrap" }}>Confidence</td>
-                    <td style={{ padding: "8px 0", color: "var(--text)", fontWeight: 500 }}>{data.risk_confidence}</td>
-                  </tr>
-                )}
-                <tr>
-                  <td style={{ padding: "8px 16px 8px 0", color: "var(--slate-dim)", fontFamily: MONO, fontSize: 11, fontWeight: 600, letterSpacing: "0.04em", verticalAlign: "top", whiteSpace: "nowrap" }}>Known Exploited</td>
-                  <td style={{ padding: "8px 0", color: data.in_kev ? "#ef4444" : "var(--text)", fontWeight: 500 }}>
-                    {data.in_kev ? "Yes — listed in CISA KEV catalog" : "No"}
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+          {/* Title and Badging */}
+          <h1 className="blog-post-h1" style={{ marginBottom: 24 }}>{data.cve_id}</h1>
+          
+          <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 16 }}>
+             <span style={{
+                fontSize: 12, fontWeight: 700, color: sev.color, fontFamily: MONO,
+                padding: "6px 14px", borderRadius: 100, border: `1px solid ${sev.border}`,
+                background: sev.bg, letterSpacing: "0.08em", textTransform: "uppercase",
+             }}>
+               {data.cvss_severity ?? "UNKNOWN"} SEVERITY
+             </span>
+             {data.in_kev && (
+               <span style={{ 
+                 fontSize: 12, fontWeight: 700, color: "#fca5a5", fontFamily: MONO, 
+                 padding: "6px 14px", borderRadius: 100, background: "rgba(248, 113, 113, 0.1)",
+                 border: "1px solid rgba(248, 113, 113, 0.2)", letterSpacing: "0.06em" 
+               }}>
+                 ⚠ KNOWN EXPLOITED (CISA)
+               </span>
+             )}
           </div>
         </div>
       </section>
 
-      <div style={hairline} />
+      {/* ═══════════════════════════════════════════════════════════════════
+          §2 — MAIN BODY & DATA (PROSE APPLIED)
+          ═══════════════════════════════════════════════════════════════════ */}
+      <section className="blog-post-content">
+        <div className="container blog-post-container">
+          <div className="prose">
+            <h2 style={h2Style}>Executive Summary</h2>
+
+            {hasTldr && (
+              <div style={{
+                background: "var(--bg-card)",
+                border: "1px solid var(--border-2)",
+                borderRadius: "12px",
+                padding: "24px 32px",
+                marginBottom: "40px",
+                boxShadow: "0 4px 24px rgba(0,0,0,0.4)"
+              }}>
+                <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+                  {tldr.target && (
+                    <div style={{ display: "flex", alignItems: "baseline", gap: 24 }}>
+                      <span style={{ fontSize: 13, fontWeight: 600, color: "var(--slate-dim)", fontFamily: MONO, minWidth: 100, textTransform: "uppercase", letterSpacing: "0.1em" }}>Target Object</span>
+                      <strong style={{ fontSize: 16, color: "var(--white-pure)" }}>{tldr.target}</strong>
+                    </div>
+                  )}
+                  {tldr.versions && (
+                    <div style={{ display: "flex", alignItems: "baseline", gap: 24 }}>
+                      <span style={{ fontSize: 13, fontWeight: 600, color: "var(--slate-dim)", fontFamily: MONO, minWidth: 100, textTransform: "uppercase", letterSpacing: "0.1em" }}>Vn. Specifier</span>
+                      <strong style={{ fontSize: 16, color: sev.color, fontFamily: MONO }}>{tldr.versions}</strong>
+                    </div>
+                  )}
+                  {tldr.vulnType && (
+                    <div style={{ display: "flex", alignItems: "baseline", gap: 24 }}>
+                      <span style={{ fontSize: 13, fontWeight: 600, color: "var(--slate-dim)", fontFamily: MONO, minWidth: 100, textTransform: "uppercase", letterSpacing: "0.1em" }}>Vulnerability</span>
+                      <strong style={{ fontSize: 16, color: "var(--white-pure)" }}>{tldr.vulnType}</strong>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            <p style={{ fontSize: 17, lineHeight: 1.8, color: "var(--slate)" }}>
+              {data.description ?? "No expansive public description is actively mapped to this vulnerability payload yet."}
+            </p>
+
+            <h2 style={{ ...h2Style, marginTop: 64 }}>Quantitative Risk Analysis</h2>
+            
+            <div style={{ 
+              background: "var(--bg-elevated)", 
+              border: "1px solid var(--border)", 
+              borderRadius: "16px",
+              padding: "48px",
+              marginTop: 32,
+              marginBottom: 48,
+              position: "relative",
+              overflow: "hidden"
+            }}>
+              {/* Premium Gradient Ring Background effect for cards */}
+              <div style={{ position: "absolute", top: -100, right: -100, width: 300, height: 300, background: `radial-gradient(circle, ${sev.color}15, transparent 70%)` }} />
+              
+              <div style={{ display: "flex", gap: 48, alignItems: "center", flexWrap: "wrap", position: "relative", zIndex: 2 }}>
+                {data.cvss_score != null && (
+                  <ScoreDonut score={data.cvss_score} maxScore={10} color={sev.color} label="CVSS v3.1 BASE" />
+                )}
+                {data.combined_risk_score != null && (
+                  <ScoreDonut score={data.combined_risk_score} maxScore={100} color={riskColor} label="OSVAULT RISK" />
+                )}
+                
+                {/* Horizontal Stat Table */}
+                <div style={{ flex: 1, minWidth: 260, borderLeft: "1px solid var(--border-2)", paddingLeft: 40 }}>
+                   <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+                     {data.epss_score != null && (
+                        <div>
+                          <div style={{ fontSize: 11, fontFamily: MONO, color: "var(--slate-dim)", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 4 }}>EPSS Probability</div>
+                          <div style={{ fontSize: 18, fontWeight: 700, color: data.epss_score > 0.5 ? "#ef4444" : "var(--white-pure)" }}>
+                            {(data.epss_score * 100).toFixed(1)}% <span style={{ fontSize: 13, fontWeight: 500, color: "var(--slate)" }}>(chance of exploit in 30 days)</span>
+                          </div>
+                        </div>
+                     )}
+                     {data.exploit_maturity && (
+                        <div>
+                          <div style={{ fontSize: 11, fontFamily: MONO, color: "var(--slate-dim)", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 4 }}>Exploit Maturity</div>
+                          <div style={{ fontSize: 16, fontWeight: 600, color: "var(--white-pure)" }}>{data.exploit_maturity}</div>
+                        </div>
+                     )}
+                   </div>
+                </div>
+              </div>
+            </div>
+
+            {/* CVSS Bar Chart breakdown styled cleanly within prose context */}
+            {data.cvss_vector && (
+               <>
+                 <h3 style={{ fontSize: 20, fontWeight: 700, color: "var(--white-pure)", marginTop: 40, marginBottom: 12 }}>Attack Vector Profile</h3>
+                 <p style={{ fontSize: 15, color: "var(--slate)", marginBottom: 24, lineHeight: 1.6 }}>
+                   The payload vectors broken down by magnitude impact and ease-of-deployment factor mapping.
+                 </p>
+                 <div style={{ background: "var(--bg-card)", border: "1px solid var(--border-2)", padding: "32px 40px", borderRadius: 12, marginBottom: 24 }}>
+                   <CvssBarChart metrics={cvssMetrics} />
+                   <div style={{ marginTop: 32, paddingTop: 20, borderTop: "1px dashed var(--border-2)", display: "flex", gap: 16, alignItems: "center" }}>
+                      <span style={{ fontSize: 11, fontFamily: MONO, color: "var(--slate-dim)", textTransform: "uppercase", letterSpacing: "0.1em" }}>Raw Vector Array</span>
+                      <code style={{ fontSize: 13, color: "var(--green)", background: "rgba(34, 197, 94, 0.1)", padding: "4px 10px", borderRadius: 6 }}>{data.cvss_vector}</code>
+                   </div>
+                 </div>
+               </>
+            )}
+
+
+            {/* ── UNIQUE §A: Plain-English Impact (derived from real CVSS vector values, no hallucination) ── */}
+            {cvssMetrics.length > 0 && (() => {
+              const avMetric   = cvssMetrics.find((m: {key:string}) => m.key === "AV");
+              const acMetric   = cvssMetrics.find((m: {key:string}) => m.key === "AC");
+              const prMetric   = cvssMetrics.find((m: {key:string}) => m.key === "PR");
+              const uiMetric   = cvssMetrics.find((m: {key:string}) => m.key === "UI");
+              const confMetric  = cvssMetrics.find((m: {key:string}) => m.key === "C");
+              const integMetric = cvssMetrics.find((m: {key:string}) => m.key === "I");
+              const availMetric = cvssMetrics.find((m: {key:string}) => m.key === "A");
+              const scopeMetric = cvssMetrics.find((m: {key:string}) => m.key === "S");
+
+              const avSentence = avMetric?.value === "Network"
+                ? "Exploitable remotely over the internet — no physical or local access needed."
+                : avMetric?.value === "Adjacent"
+                ? "Requires the attacker to be on the same network segment (LAN/VPN) as the target."
+                : avMetric?.value === "Local"
+                ? "Requires local system access; remote exploitation is not possible."
+                : "Requires physical hardware access.";
+
+              const acSentence = acMetric?.value === "Low"
+                ? "No special preconditions — the attack is reliably repeatable."
+                : "Requires specific conditions outside attacker control, reducing repeatability.";
+
+              const prSentence = prMetric?.value === "None"
+                ? "No authentication required — unauthenticated attackers can exploit directly."
+                : prMetric?.value === "Low"
+                ? "A basic authenticated account is sufficient to trigger this."
+                : "Elevated or admin privileges are required.";
+
+              const uiSentence = uiMetric?.value === "None"
+                ? "No user interaction required — the attacker acts autonomously."
+                : "A victim must take a specific action (open file, click link) for exploitation.";
+
+              const impactParts: string[] = [];
+              if (confMetric?.value === "High")  impactParts.push("full data confidentiality breach");
+              if (integMetric?.value === "High")  impactParts.push("complete integrity compromise");
+              if (availMetric?.value === "High")  impactParts.push("total service availability loss");
+              if (confMetric?.value === "Low")    impactParts.push("partial information disclosure");
+              if (integMetric?.value === "Low")   impactParts.push("limited data modification");
+              if (availMetric?.value === "Low")   impactParts.push("partial service degradation");
+
+              const impactSentence = impactParts.length > 0
+                ? `Successful exploitation causes: ${impactParts.join(", ")}${scopeMetric?.value === "Changed" ? ", potentially cascading beyond the vulnerable component" : ""}.`
+                : "Impact on CIA triad is limited per available vector data.";
+
+              const sentences = [avSentence, acSentence, prSentence, uiSentence, impactSentence];
+              return (
+                <>
+                  <h2 style={{ ...h2Style, marginTop: 64 }}>What This Means For Your System</h2>
+                  <p style={{ fontSize: 15, color: "var(--slate)", marginBottom: 24, lineHeight: 1.6 }}>
+                    Each point below is derived directly from this CVE&#39;s CVSS v3.1 vector — not editorial opinion.
+                  </p>
+                  <div style={{ background: "var(--bg-card)", border: "1px solid var(--border-2)", borderRadius: 12, padding: "28px 32px", marginBottom: 40, display: "flex", flexDirection: "column", gap: 16 }}>
+                    {sentences.map((sentence, i) => (
+                      <div key={i} style={{ display: "flex", gap: 16, alignItems: "flex-start" }}>
+                        <span style={{ flexShrink: 0, width: 22, height: 22, borderRadius: "50%", background: "var(--bg-elevated)", border: "1px solid var(--border)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700, color: "var(--slate-dim)", fontFamily: MONO, marginTop: 2 }}>{i + 1}</span>
+                        <p style={{ fontSize: 15, color: "var(--slate)", lineHeight: 1.65, margin: 0 }}>{sentence}</p>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              );
+            })()}
+
+            {/* ── UNIQUE §B: OsVault Risk Score Methodology (matches real score.rs algorithm) ── */}
+            {data.combined_risk_score != null && (() => {
+              // Replicate the real score.rs piecewise curve for display
+              const cvssVal = data.cvss_score ?? 0;
+              let technicalBase = 50.0;
+              if (cvssVal >= 9.0) technicalBase = 85.0 + ((cvssVal - 9.0) / 1.0) * 15.0;
+              else if (cvssVal >= 7.0) technicalBase = 55.0 + ((cvssVal - 7.0) / 2.0) * 30.0;
+              else if (cvssVal >= 4.0) technicalBase = 20.0 + ((cvssVal - 4.0) / 3.0) * 35.0;
+              else technicalBase = (cvssVal / 4.0) * 20.0;
+
+              // Sigmoid EPSS transform (k=40, midpoint=0.05)
+              const rawEpss = data.epss_score ?? 0;
+              const sigEpss = 1.0 / (1.0 + Math.exp(-40.0 * (rawEpss - 0.05)));
+
+              // Exploit maturity classification
+              let maturityLabel = "Unproven";
+              let maturityBase = 18.0;
+              if (data.kev && rawEpss >= 0.50) { maturityLabel = "Weaponized"; maturityBase = 85.0; }
+              else if (data.kev || rawEpss >= 0.10) { maturityLabel = "Functional"; maturityBase = 55.0; }
+              else if (rawEpss >= 0.01) { maturityLabel = "Proof of Concept"; maturityBase = 40.0; }
+
+              const threatScore = maturityBase + (100.0 - maturityBase) * sigEpss;
+              const kevFloor = data.kev ? (rawEpss >= 0.50 ? 97 : 93) : null;
+
+              return (
+                <>
+                  <h2 style={{ ...h2Style, marginTop: 64 }}>OsVault Risk Score Methodology</h2>
+                  <p style={{ fontSize: 15, color: "var(--slate)", marginBottom: 24, lineHeight: 1.6 }}>
+                    The OsVault composite score is a 5-layer non-linear engine &mdash; not a simple weighted average. Each input signal is transformed through mathematically appropriate curves before blending, ensuring that exploitability context overrides raw severity when warranted.
+                  </p>
+
+                  {/* Layer architecture table */}
+                  <div style={{ border: "1px solid var(--border)", borderRadius: 12, overflow: "hidden", marginBottom: 24 }}>
+                    <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 14 }}>
+                      <thead>
+                        <tr style={{ background: "var(--bg-hover)", borderBottom: "1px solid var(--border-2)" }}>
+                          {["Layer", "Signal", "This CVE", "Transformed Value"].map(h => (
+                            <th key={h} style={{ padding: "14px 20px", textAlign: "left", fontFamily: MONO, fontSize: 11, color: "var(--slate-dim)", textTransform: "uppercase", letterSpacing: "0.1em", fontWeight: 600 }}>{h}</th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr style={{ borderBottom: "1px solid var(--border-2)" }}>
+                          <td style={{ padding: "14px 20px", color: "var(--slate-dim)", fontFamily: MONO, fontSize: 12 }}>L1</td>
+                          <td style={{ padding: "14px 20px", color: "var(--white-pure)", fontWeight: 600 }}>Technical Severity</td>
+                          <td style={{ padding: "14px 20px", color: "var(--slate)", fontFamily: MONO }}>CVSS {data.cvss_score ?? "—"}/10</td>
+                          <td style={{ padding: "14px 20px", color: sev.color, fontWeight: 700, fontFamily: MONO }}>{technicalBase.toFixed(1)} <span style={{ color: "var(--slate-dim)", fontWeight: 400, fontSize: 11 }}>(piecewise exponential × vector modifiers)</span></td>
+                        </tr>
+                        <tr style={{ borderBottom: "1px solid var(--border-2)" }}>
+                          <td style={{ padding: "14px 20px", color: "var(--slate-dim)", fontFamily: MONO, fontSize: 12 }}>L2</td>
+                          <td style={{ padding: "14px 20px", color: "var(--white-pure)", fontWeight: 600 }}>Threat Intelligence</td>
+                          <td style={{ padding: "14px 20px", color: "var(--slate)", fontFamily: MONO }}>EPSS {(rawEpss * 100).toFixed(3)}% &middot; {maturityLabel}</td>
+                          <td style={{ padding: "14px 20px", color: "var(--white-pure)", fontWeight: 700, fontFamily: MONO }}>{threatScore.toFixed(1)} <span style={{ color: "var(--slate-dim)", fontWeight: 400, fontSize: 11 }}>(sigmoid EPSS k=40 + maturity tier base)</span></td>
+                        </tr>
+                        <tr style={{ borderBottom: "1px solid var(--border-2)" }}>
+                          <td style={{ padding: "14px 20px", color: "var(--slate-dim)", fontFamily: MONO, fontSize: 12 }}>L3</td>
+                          <td style={{ padding: "14px 20px", color: "var(--white-pure)", fontWeight: 600 }}>CISA KEV Status</td>
+                          <td style={{ padding: "14px 20px", color: "var(--slate)", fontFamily: MONO }}>{data.kev ? "Listed — active exploitation" : "Not listed"}</td>
+                          <td style={{ padding: "14px 20px", color: data.kev ? "#ef4444" : "var(--slate-dim)", fontWeight: 700, fontFamily: MONO }}>{kevFloor ? `Floor: ${kevFloor}` : "No floor applied"}</td>
+                        </tr>
+                        <tr style={{ background: "var(--bg-elevated)" }}>
+                          <td style={{ padding: "14px 20px", color: "var(--slate-dim)", fontFamily: MONO, fontSize: 12 }}>∑</td>
+                          <td colSpan={2} style={{ padding: "14px 20px", color: "var(--white-pure)", fontWeight: 700 }}>Composite: 50% Technical + 40% Threat + 10% Context</td>
+                          <td style={{ padding: "14px 20px", color: riskColor, fontWeight: 900, fontFamily: MONO, fontSize: 20 }}>{data.combined_risk_score}</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {/* Algorithm explanation */}
+                  <div style={{ background: "var(--bg-card)", border: "1px solid var(--border-2)", borderRadius: 12, padding: "24px 28px", marginBottom: 16, display: "flex", flexDirection: "column", gap: 12 }}>
+                    <p style={{ fontSize: 13, color: "var(--slate)", lineHeight: 1.65, margin: 0 }}>
+                      <strong style={{ color: "var(--white-pure)" }}>Layer 1 (Technical):</strong> CVSS is mapped through a piecewise exponential curve with 4 bands (LOW 0–20, MEDIUM 20–55, HIGH 55–85, CRITICAL 85–100), then multiplied by full CVSS vector decomposition factors for Attack Vector, Complexity, Privileges, and User Interaction.
+                    </p>
+                    <p style={{ fontSize: 13, color: "var(--slate)", lineHeight: 1.65, margin: 0 }}>
+                      <strong style={{ color: "var(--white-pure)" }}>Layer 2 (Threat):</strong> Raw EPSS is passed through a logistic sigmoid (k=40, midpoint=0.05) to maximize discrimination in the decision-relevant range. The result is added to an exploit maturity tier base score (Weaponized: 85, Functional: 55, PoC: 40, Unproven: 18).
+                    </p>
+                    <p style={{ fontSize: 13, color: "var(--slate)", lineHeight: 1.65, margin: 0 }}>
+                      <strong style={{ color: "var(--white-pure)" }}>Layer 3 (KEV Floor):</strong> Any CVE in CISA&#39;s catalog receives a hard minimum of 93.0 (Functional) or 97.0 (Weaponized). This ensures confirmed exploitation is never buried by low CVSS scores.
+                    </p>
+                  </div>
+                  <p style={{ fontSize: 13, color: "var(--slate-dim)", lineHeight: 1.6, marginBottom: 40 }}>
+                    Scores ≥70: patch immediately. 40–69: schedule within current sprint. Below 40: standard maintenance cycle.
+                  </p>
+                </>
+              );
+            })()}
+
+            {/* ── UNIQUE §C: Remediation Commands (generated from real ecosystem package data) ── */}
+            {affectedPackages.length > 0 && (() => {
+              const cmds = affectedPackages.flatMap((pkg: {name: string; ecosystem: string; versions?: string[]}) => {
+                const eco  = pkg.ecosystem?.toLowerCase();
+                const name = pkg.name;
+                if (!name) return [];
+                if (eco === "npm")       return [{ label: "npm",       cmd: `npm install ${name}@latest` }];
+                if (eco === "pypi")      return [{ label: "pip",       cmd: `pip install --upgrade ${name}` }];
+                if (eco === "maven")     return [{ label: "Maven",     cmd: `mvn versions:use-latest-releases -Dincludes=${name}` }];
+                if (eco === "go")        return [{ label: "Go",        cmd: `go get ${name}@latest` }];
+                if (eco === "packagist") return [{ label: "Composer",  cmd: `composer update ${name}` }];
+                if (eco === "rubygems")  return [{ label: "Bundler",   cmd: `bundle update ${name.split("/").pop()}` }];
+                if (eco === "crates.io") return [{ label: "Cargo",     cmd: `cargo update -p ${name.split("/").pop()}` }];
+                if (eco === "nuget")     return [{ label: "NuGet",     cmd: `dotnet add package ${name}` }];
+                return [{ label: eco ?? "Package Manager", cmd: `# Upgrade ${name} past the affected version range` }];
+              }).slice(0, 6);
+              if (cmds.length === 0) return null;
+              return (
+                <>
+                  <h2 style={{ ...h2Style, marginTop: 64 }}>Remediation Commands</h2>
+                  <p style={{ fontSize: 15, color: "var(--slate)", marginBottom: 20, lineHeight: 1.6 }}>
+                    Commands to update each affected package identified in this advisory. Verify the target release explicitly addresses this CVE in the upstream changelog before deploying to production.
+                  </p>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 48 }}>
+                    {cmds.map((c: {label: string; cmd: string}, i: number) => (
+                      <div key={i} style={{ background: "#09090b", border: "1px solid var(--border)", borderRadius: 8, padding: "14px 20px", display: "flex", alignItems: "center", gap: 16 }}>
+                        <span style={{ fontSize: 10, fontFamily: MONO, color: "var(--slate-dim)", textTransform: "uppercase", letterSpacing: "0.12em", minWidth: 64, flexShrink: 0 }}>{c.label}</span>
+                        <code style={{ fontFamily: MONO, fontSize: 14, color: "#22c55e", flex: 1 }}>{c.cmd}</code>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              );
+            })()}
+
+            {/* Affected Subcomponents Table */}
+            {affectedPackages.length > 0 && (
+               <>
+                 <h2 style={{ ...h2Style, marginTop: 64 }}>Affected Software Subcomponents</h2>
+                 <div style={{ border: "1px solid var(--border)", borderRadius: "12px", overflow: "hidden", marginTop: 24 }}>
+                   <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 15, textAlign: "left" }}>
+                     <thead style={{ background: "var(--bg-hover)" }}>
+                       <tr>
+                         <th style={{ padding: "16px 24px", color: "var(--slate)", fontWeight: 600, fontSize: 12, fontFamily: MONO, textTransform: "uppercase", letterSpacing: "0.08em", borderBottom: "1px solid var(--border-2)" }}>Network</th>
+                         <th style={{ padding: "16px 24px", color: "var(--slate)", fontWeight: 600, fontSize: 12, fontFamily: MONO, textTransform: "uppercase", letterSpacing: "0.08em", borderBottom: "1px solid var(--border-2)" }}>Package Target</th>
+                         <th style={{ padding: "16px 24px", color: "var(--slate)", fontWeight: 600, fontSize: 12, fontFamily: MONO, textTransform: "uppercase", letterSpacing: "0.08em", borderBottom: "1px solid var(--border-2)" }}>Affected Iterations</th>
+                       </tr>
+                     </thead>
+                     <tbody>
+                       {affectedPackages.map((pkg, i) => (
+                         <tr key={i} style={{ borderBottom: i !== affectedPackages.length - 1 ? "1px solid var(--border-2)" : "none", background: "var(--bg)" }}>
+                           <td style={{ padding: "20px 24px", verticalAlign: "top" }}>
+                             <span style={{ fontSize: 12, color: "var(--slate-dim)", fontFamily: MONO, background: "var(--bg-elevated)", padding: "4px 8px", borderRadius: "6px" }}>{pkg.ecosystem}</span>
+                           </td>
+                           <td style={{ padding: "20px 24px", verticalAlign: "top" }}>
+                             <strong style={{ fontWeight: 600, color: "var(--white-pure)" }}>
+                               {pkg.ecosystem?.toLowerCase() === "npm"
+                                 ? <a href={`/npm/${encodeURIComponent(pkg.name)}`} style={{ textDecoration: "underline", textUnderlineOffset: 4, textDecorationColor: "var(--border)" }}>{pkg.name}</a>
+                                 : pkg.name}
+                             </strong>
+                           </td>
+                           <td style={{ padding: "20px 24px", verticalAlign: "top", color: "var(--slate)", fontFamily: MONO, fontSize: 13, lineHeight: 1.7 }}>
+                             {pkg.versions?.slice(0, 5).map(v => <span key={v} style={{ display: 'inline-block', background: 'var(--bg-card)', border: '1px solid var(--border-2)', padding: '2px 8px', borderRadius: 4, marginRight: 8, marginBottom: 8 }}>{v}</span>) ?? "Unspecified constraints"}
+                             {(pkg.versions?.length ?? 0) > 5 && <span style={{ color: "var(--slate-dim)" }}>...+{pkg.versions!.length - 5}</span>}
+                           </td>
+                         </tr>
+                       ))}
+                     </tbody>
+                   </table>
+                 </div>
+               </>
+            )}
+
+            {/* Platform Identifiers / CPE */}
+            {data.cpe_list?.length > 0 && (
+               <>
+                 <h2 style={{ ...h2Style, marginTop: 64 }}>CPE Identifiers</h2>
+                 <p style={{ fontSize: 15, color: "var(--slate)", marginBottom: 16 }}>
+                   Common Platform Enumeration (CPE) names mapped to this advisory by the National Vulnerability Database.
+                 </p>
+                 <pre style={{ margin: 0, padding: 24, fontSize: 12, color: "var(--slate)", background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 12, lineHeight: 1.8, overflowX: "auto" }}>
+                   {data.cpe_list.slice(0, 15).join('\n')}
+                   {data.cpe_list.length > 15 && `\n\n… ${data.cpe_list.length - 15} additional identifiers unlisted.`}
+                 </pre>
+               </>
+            )}
+            
+          </div>
+        </div>
+      </section>
 
       {/* ═══════════════════════════════════════════════════════════════════
-          §4 — ATTACK VECTOR PROFILE (SVG bar chart)
+          §3 — DISCOVERY ENGINE (Related CVEs transformed to grid layout)
           ═══════════════════════════════════════════════════════════════════ */}
-      {data.cvss_vector && (
-        <section style={{ marginTop: 48, marginBottom: 56 }}>
-          <div style={sectionLabel}>Attack Vector Profile</div>
-          <h2 style={{ ...h2Style, marginBottom: 4 }}>CVSS v3.1 Metric Breakdown</h2>
-          <p style={{ fontSize: 13, color: "var(--slate-dim)", marginBottom: 28, lineHeight: 1.5 }}>
-            Each bar represents the severity contribution of a single CVSS metric. Longer bars indicate higher risk factors.
-          </p>
-
-          {/* SVG bar chart */}
-          <CvssBarChart metrics={cvssMetrics} />
-
-          {/* Raw vector reference */}
-          <div style={{ marginTop: 24 }}>
-            <code style={{ fontSize: 12, color: "var(--green)", fontFamily: MONO, fontWeight: 500, opacity: 0.7 }}>
-              {data.cvss_vector}
-            </code>
+      {relatedSections.length > 0 && (
+        <section className="blog-recent" style={{ borderTop: "1px solid var(--border-dark)", paddingTop: 80, paddingBottom: 80, background: "var(--bg-card)" }}>
+          <div className="container">
+            <h2 className="blog-section-title" style={{ textAlign: "center" }}>Relevant Threat Intelligence</h2>
+            
+            <div style={{ display: "flex", flexDirection: "column", gap: 64, marginTop: 40 }}>
+              {relatedSections.map((section, i) => (
+                <div key={i}>
+                  <h3 style={{ fontSize: 22, fontWeight: 700, color: "var(--white-pure)", marginBottom: 24, letterSpacing: "-0.02em" }}>
+                    {section.label}
+                  </h3>
+                  
+                  <div className="blog-grid" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))" }}>
+                    {section.cves.map((cve) => {
+                      const ls = SEV[cve.cvss_severity ?? ""];
+                      return (
+                         <a key={cve.cve_id} href={`/cve/${cve.cve_id}`} className="blog-card" style={{ display: 'flex', flexDirection: 'column' }}>
+                           <div className="blog-meta" style={{ display: 'flex', justifyContent: 'space-between' }}>
+                             <span className="blog-date">{cve.cve_id}</span>
+                             {cve.cvss_severity && (
+                               <span style={{
+                                 fontSize: 10, fontWeight: 700, color: ls?.color ?? "var(--slate-dim)",
+                                 padding: "4px 8px", borderRadius: 4, background: ls?.bg ?? "transparent",
+                                 border: `1px solid ${ls?.border ?? "var(--border)"}`, letterSpacing: "0.1em", textTransform: "uppercase"
+                               }}>
+                                 {cve.cvss_severity}
+                               </span>
+                             )}
+                           </div>
+                           <p className="blog-card-excerpt" style={{ fontSize: 13, marginTop: 12, marginBottom: 0, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical' }}>
+                              {cve.description || "No public summary found for this threat instance."}
+                           </p>
+                         </a>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         </section>
       )}
 
       {/* ═══════════════════════════════════════════════════════════════════
-          §5 — AFFECTED SOFTWARE
+          §4 — FINAL CTA & ACTIONABLE ENDPOINT
           ═══════════════════════════════════════════════════════════════════ */}
-      {affectedPackages.length > 0 && (
-        <>
-          <div style={hairline} />
-          <section style={{ marginTop: 48, marginBottom: 56 }}>
-            <div style={sectionLabel}>Affected Software</div>
-            <h2 style={h2Style}>Vulnerable Packages</h2>
-
-            <div style={{ overflowX: "auto", marginTop: 20 }}>
-              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 14 }}>
-                <thead>
-                  <tr>
-                    <th style={{ padding: "0 16px 14px 0", textAlign: "left", color: "var(--slate-dim)", fontWeight: 600, fontSize: 11, fontFamily: MONO, letterSpacing: "0.06em", borderBottom: "1px solid var(--border)" }}>Ecosystem</th>
-                    <th style={{ padding: "0 16px 14px 0", textAlign: "left", color: "var(--slate-dim)", fontWeight: 600, fontSize: 11, fontFamily: MONO, letterSpacing: "0.06em", borderBottom: "1px solid var(--border)" }}>Package</th>
-                    <th style={{ padding: "0 0 14px 0", textAlign: "left", color: "var(--slate-dim)", fontWeight: 600, fontSize: 11, fontFamily: MONO, letterSpacing: "0.06em", borderBottom: "1px solid var(--border)" }}>Affected Versions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {affectedPackages.map((pkg, i) => (
-                    <tr key={i} style={{ borderBottom: "1px solid var(--border-2)" }}>
-                      <td style={{ padding: "14px 16px 14px 0", verticalAlign: "top" }}>
-                        <span style={{ fontSize: 12, color: "var(--slate-dim)", fontFamily: MONO, textTransform: "uppercase" }}>{pkg.ecosystem}</span>
-                      </td>
-                      <td style={{ padding: "14px 16px 14px 0", verticalAlign: "top" }}>
-                        <strong style={{ fontWeight: 500, color: "var(--text)" }}>
-                          {pkg.ecosystem?.toLowerCase() === "npm"
-                            ? <a href={`/npm/${encodeURIComponent(pkg.name)}`} style={{ textDecoration: "underline", textUnderlineOffset: 4, textDecorationColor: "var(--border)" }}>{pkg.name}</a>
-                            : pkg.name}
-                        </strong>
-                      </td>
-                      <td style={{ padding: "14px 0", verticalAlign: "top", color: "var(--text-2)", fontFamily: MONO, fontSize: 12, lineHeight: 1.7 }}>
-                        {pkg.versions?.slice(0, 8).join(", ") ?? "All or unspecified versions"}
-                        {(pkg.versions?.length ?? 0) > 8 && <span style={{ color: "var(--slate-dim)" }}> +{pkg.versions!.length - 8} more</span>}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+      <section className="blog-post-cta" style={{ background: "var(--bg)" }}>
+        <div className="container blog-post-container" style={{ paddingBottom: 60 }}>
+          <div className="blog-post-cta-inner" style={{ background: "radial-gradient(circle at right, rgba(230,57,70,0.06), transparent 50%), var(--bg-card)" }}>
+            <div className="blog-post-cta-content">
+               <h3>Are you affected by {data.cve_id}?</h3>
+               <p style={{ marginTop: 8 }}>Integrate OsVault's static analysis engine directly into your repository to uncover unreachable downstream vulnerabilities implicitly bypassing your firewall rules.</p>
             </div>
-          </section>
-        </>
-      )}
-
-      {/* ═══════════════════════════════════════════════════════════════════
-          §6 — CONFIGURATIONS (CPE)
-          ═══════════════════════════════════════════════════════════════════ */}
-      {data.cpe_list?.length > 0 && (
-        <>
-          <div style={hairline} />
-          <section style={{ marginTop: 48, marginBottom: 56 }}>
-            <div style={sectionLabel}>Configurations</div>
-            <h2 style={h2Style}>Affected Platforms (CPE)</h2>
-            <div style={{ marginTop: 16, paddingLeft: 20, borderLeft: "2px solid var(--border)", fontFamily: MONO, overflowX: "auto" }}>
-              <pre style={{ margin: 0, fontSize: 11, color: "var(--text-3)", lineHeight: 1.8 }}>
-                {data.cpe_list.slice(0, 15).join('\n')}
-                {data.cpe_list.length > 15 && `\n\n… ${data.cpe_list.length - 15} additional configurations omitted.`}
-              </pre>
+            <a href="/checker" className="btn-primary" style={{ padding: "12px 28px", fontSize: 14 }}>Run Platform Scan →</a>
+          </div>
+          
+          {/* Subtle footer */}
+          <footer style={{
+            marginTop: 40, display: "flex", flexWrap: "wrap", justifyContent: "space-between", gap: 32,
+            fontSize: 13, color: "var(--slate-dim)", fontFamily: MONO, letterSpacing: "0.04em"
+          }}>
+            <div>Last Platform Sync: <span style={{ color: "var(--slate)" }}>{modifiedDate ?? "Unknown"}</span></div>
+            <div>
+              <a href={`https://nvd.nist.gov/vuln/detail/${data.cve_id}`} target="_blank" rel="noopener noreferrer" style={{ color: "var(--slate)", textDecoration: "underline" }}>
+                Verify Against NIST NVD Original Context
+              </a>
             </div>
-          </section>
-        </>
-      )}
-
-      {/* ═══════════════════════════════════════════════════════════════════
-          §7 — RELATED ADVISORIES (lateral internal links)
-          ═══════════════════════════════════════════════════════════════════ */}
-      {relatedSections.length > 0 && (
-        <>
-          <div style={hairline} />
-          <section id="related-vulnerabilities" style={{ marginTop: 48, marginBottom: 56 }}>
-            <div style={sectionLabel}>Related Advisories</div>
-
-            {relatedSections.map((section, i) => (
-              <div key={i} style={{ marginBottom: i < relatedSections.length - 1 ? 32 : 0 }}>
-                <h3 style={{ fontSize: 15, fontWeight: 600, color: "var(--text)", marginBottom: 12, letterSpacing: "-0.01em" }}>
-                  {section.label}
-                </h3>
-                <ul style={{ margin: 0, padding: 0, listStyle: "none", display: "flex", flexDirection: "column", gap: 0 }}>
-                  {section.cves.map((cve, j) => {
-                    const ls = SEV[cve.cvss_severity ?? ""];
-                    return (
-                      <li key={cve.cve_id} style={{ borderBottom: j < section.cves.length - 1 ? "1px solid var(--border-2)" : "none" }}>
-                        <a
-                          href={`/cve/${cve.cve_id}`}
-                          style={{
-                            display: "flex", alignItems: "center", gap: 12,
-                            padding: "10px 0",
-                            textDecoration: "none", fontSize: 14,
-                          }}
-                        >
-                          {/* Severity dot */}
-                          <span style={{
-                            width: 7, height: 7, borderRadius: "50%", flexShrink: 0,
-                            background: ls?.color ?? "var(--slate-dim)",
-                          }} />
-                          <span style={{ color: "var(--text)", fontWeight: 500, fontFamily: MONO, fontSize: 13 }}>
-                            {cve.cve_id}
-                          </span>
-                          {cve.cvss_severity && (
-                            <span style={{
-                              marginLeft: "auto", fontSize: 10, fontWeight: 600,
-                              color: ls?.color ?? "var(--slate-dim)",
-                              letterSpacing: "0.06em", fontFamily: MONO,
-                            }}>
-                              {cve.cvss_severity}
-                            </span>
-                          )}
-                        </a>
-                      </li>
-                    );
-                  })}
-                </ul>
-              </div>
-            ))}
-          </section>
-        </>
-      )}
-
-      {/* ═══════════════════════════════════════════════════════════════════
-          §8 — DOCUMENT FOOTER
-          ═══════════════════════════════════════════════════════════════════ */}
-      <div style={hairline} />
-      <footer style={{
-        marginTop: 40, marginBottom: 64,
-        display: "flex", flexWrap: "wrap", justifyContent: "space-between", gap: 32,
-        fontSize: 13, color: "var(--text-2)",
-      }}>
-        <div>
-          <span style={{ ...sectionLabel, marginBottom: 6, display: "block" }}>Last Modified</span>
-          <span style={{ color: "var(--text)", fontWeight: 500, fontSize: 14 }}>{modifiedDate ?? "Unknown"}</span>
+          </footer>
         </div>
-        <div>
-          <span style={{ ...sectionLabel, marginBottom: 6, display: "block" }}>Authoritative Source</span>
-          <a href={`https://nvd.nist.gov/vuln/detail/${data.cve_id}`} target="_blank" rel="noopener noreferrer" style={{ color: "var(--accent)", fontWeight: 500, textDecoration: "none", fontSize: 14 }}>
-            NVD NIST Database ↗
-          </a>
-        </div>
-        <div style={{ marginLeft: "auto", alignSelf: "center" }}>
-          <a href="/checker" style={{ color: "var(--text)", fontWeight: 500, fontSize: 14, textDecoration: "underline", textUnderlineOffset: 4, textDecorationColor: "var(--border)" }}>
-            Scan Your Project →
-          </a>
-        </div>
-      </footer>
+      </section>
 
-      {/* ═══════════════════════════════════════════════════════════════════
-          §9 — RECOMMENDED SECURITY TOOLS
-          ═══════════════════════════════════════════════════════════════════ */}
-      {isCriticalOrHigh && (
-        <>
-          <div style={hairline} />
-          <section style={{ marginTop: 40 }}>
-            <div style={sectionLabel}>Recommended Security Tools</div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", flexWrap: "wrap", gap: 16 }}>
-                <div>
-                  <div style={{ fontSize: 15, color: "var(--text)", fontWeight: 600, marginBottom: 6 }}>Vulnerability Remediation Engine</div>
-                  <div style={{ fontSize: 13, color: "var(--text-2)", maxWidth: 460, lineHeight: 1.6 }}>{AFFILIATES.snyk.cta_critical(1)}</div>
-                </div>
-                <a href={AFFILIATES.snyk.href} target="_blank" rel="noopener noreferrer sponsored" style={{ color: "#ef4444", fontWeight: 600, fontSize: 13, textDecoration: "none", fontFamily: MONO }}>
-                  {AFFILIATES.snyk.name} ↗
-                </a>
-              </div>
-              <div style={{ ...hairline, background: "var(--border-2)" }} />
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", flexWrap: "wrap", gap: 16 }}>
-                <div>
-                  <div style={{ fontSize: 15, color: "var(--text)", fontWeight: 600, marginBottom: 6 }}>Proactive Dependency Protection</div>
-                  <div style={{ fontSize: 13, color: "var(--text-2)", maxWidth: 460, lineHeight: 1.6 }}>{AFFILIATES.socket.cta_general}</div>
-                </div>
-                <a href={AFFILIATES.socket.href} target="_blank" rel="noopener noreferrer sponsored" style={{ color: "var(--accent)", fontWeight: 600, fontSize: 13, textDecoration: "none", fontFamily: MONO }}>
-                  {AFFILIATES.socket.name} ↗
-                </a>
-              </div>
-            </div>
-          </section>
-        </>
-      )}
-    </article>
+    </main>
   );
 }

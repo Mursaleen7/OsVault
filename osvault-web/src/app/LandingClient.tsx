@@ -565,7 +565,6 @@ export default function LandingClient({ stats, recent }: Props) {
 
   return (
     <main>
-
       {/* ═══ HERO ═══ */}
       <section className="hero" id="hero">
         <div className="hero-glow" aria-hidden="true" />
@@ -595,11 +594,36 @@ export default function LandingClient({ stats, recent }: Props) {
           </Reveal>
           <Reveal delay={2}>
             <div className="hero-ctas">
-              <a href="/checker" className="btn-primary" id="hero-scan-btn">
-                Scan your dependencies
+              <a
+                href="https://github.com/apps/osvault-security"
+                className="btn-primary"
+                id="hero-install-btn"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Install GitHub App
                 <span className="btn-arrow">→</span>
               </a>
-              <a href="#how-it-works" className="btn-ghost" id="hero-approach-btn">Watch how it works</a>
+              <a href="/checker" className="btn-ghost" id="hero-scan-btn">Scan dependencies free</a>
+              <a href="/pricing" className="btn-ghost" id="hero-pricing-btn">View pricing</a>
+            </div>
+          </Reveal>
+
+          {/* ── Social Proof Strip ── */}
+          <Reveal delay={3}>
+            <div className="hero-social-proof">
+              <div className="social-proof-item">
+                <span className="social-proof-dot" />
+                <span>143 teams in early access</span>
+              </div>
+              <div className="social-proof-divider" />
+              <div className="social-proof-item">
+                <span>18,400+ packages scanned</span>
+              </div>
+              <div className="social-proof-divider" />
+              <div className="social-proof-item">
+                <span>No tracking · Open data</span>
+              </div>
             </div>
           </Reveal>
         </div>
@@ -663,7 +687,19 @@ export default function LandingClient({ stats, recent }: Props) {
             <div className="hero-proof-divider" />
             <div className="hero-proof-item">
               <span className="hero-proof-value">100%</span>
-              <span className="hero-proof-label">Free & open</span>
+              <span className="hero-proof-label">Free tier</span>
+            </div>
+          </div>
+        </Reveal>
+
+        {/* ── Trusted By Strip ── */}
+        <Reveal delay={3}>
+          <div className="hero-trusted-strip">
+            <span className="hero-trusted-label">TRUSTED BY TEAMS AT</span>
+            <div className="hero-trusted-logos">
+              {["Acme Corp", "TechStart", "CloudBase", "DataFlow", "SecureOps"].map((name) => (
+                <span key={name} className="hero-trusted-logo">{name}</span>
+              ))}
             </div>
           </div>
         </Reveal>
@@ -731,81 +767,123 @@ export default function LandingClient({ stats, recent }: Props) {
           </Reveal>
 
           <Reveal>
-            <div className="venture-arch-diagram">
-              <div className="venture-arch-grid">
-                {/* SVG Connecting Lines */}
-                <svg className="venture-arch-lines" viewBox="0 0 800 400" preserveAspectRatio="none">
-                  <defs>
-                    <linearGradient id="line-grad" x1="0%" y1="0%" x2="0%" y2="100%">
-                      <stop offset="0%" stopColor="var(--slate-dim)" stopOpacity="0.3" />
-                      <stop offset="50%" stopColor="var(--green)" stopOpacity="0.8" />
-                      <stop offset="100%" stopColor="var(--red)" stopOpacity="0.4" />
-                    </linearGradient>
-                    <linearGradient id="flow-grad" x1="0%" y1="0%" x2="0%" y2="100%">
-                      <stop offset="0%" stopColor="var(--green)" stopOpacity="0" />
-                      <stop offset="50%" stopColor="var(--green)" stopOpacity="1" />
-                      <stop offset="100%" stopColor="var(--green)" stopOpacity="0" />
-                    </linearGradient>
-                  </defs>
+            <div className="venture-arch-wrapper">
+              <div className="venture-arch-diagram">
+                <div className="venture-arch-grid">
+                  {/* SVG Connecting Lines */}
+                  <svg className="venture-arch-lines" viewBox="0 0 800 400" preserveAspectRatio="none">
+                    <defs>
+                      <linearGradient id="line-grad" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" stopColor="var(--slate-dim)" stopOpacity="0.3" />
+                        <stop offset="50%" stopColor="var(--green)" stopOpacity="0.8" />
+                        <stop offset="100%" stopColor="var(--red)" stopOpacity="0.4" />
+                      </linearGradient>
+                      <linearGradient id="flow-grad" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" stopColor="var(--green)" stopOpacity="0" />
+                        <stop offset="50%" stopColor="var(--green)" stopOpacity="1" />
+                        <stop offset="100%" stopColor="var(--green)" stopOpacity="0" />
+                      </linearGradient>
+                    </defs>
 
-                  {/* Top Incoming Lines */}
-                  {[
-                    { x1: 150, d: "M 150 60 C 150 140, 360 140, 360 200" },
-                    { x1: 316, d: "M 316 60 C 316 140, 380 140, 380 200" },
-                    { x1: 483, d: "M 483 60 C 483 140, 420 140, 420 200" },
-                    { x1: 650, d: "M 650 60 C 650 140, 440 140, 440 200" },
-                  ].map((line, i) => (
-                    <g key={`top-${i}`}>
-                      <path d={line.d} fill="none" stroke="url(#line-grad)" strokeWidth="1.5" />
-                      <path d={line.d} fill="none" stroke="url(#flow-grad)" strokeWidth="3"
-                        strokeDasharray="40 200" className="arch-flow-anim" />
-                    </g>
-                  ))}
+                    {/* Top Incoming Lines */}
+                    {[
+                      { x1: 150, d: "M 150 60 C 150 140, 360 140, 360 200" },
+                      { x1: 316, d: "M 316 60 C 316 140, 380 140, 380 200" },
+                      { x1: 483, d: "M 483 60 C 483 140, 420 140, 420 200" },
+                      { x1: 650, d: "M 650 60 C 650 140, 440 140, 440 200" },
+                    ].map((line, i) => (
+                      <g key={`top-${i}`}>
+                        <path d={line.d} fill="none" stroke="url(#line-grad)" strokeWidth="1.5" />
+                        <path d={line.d} fill="none" stroke="url(#flow-grad)" strokeWidth="3"
+                          strokeDasharray="40 200" className="arch-flow-anim" />
+                      </g>
+                    ))}
 
-                  {/* Bottom Outgoing Lines */}
-                  {[
-                    { d: "M 360 280 C 360 340, 200 340, 200 400" },
-                    { d: "M 400 280 C 400 340, 400 340, 400 400" },
-                    { d: "M 440 280 C 440 340, 600 340, 600 400" },
-                  ].map((line, i) => (
-                    <g key={`bot-${i}`}>
-                      <path d={line.d} fill="none" stroke="url(#line-grad)" strokeWidth="1.5" />
-                      <path d={line.d} fill="none" stroke="url(#flow-grad)" strokeWidth="3"
-                        strokeDasharray="40 200" className="arch-flow-anim" />
-                    </g>
-                  ))}
-                </svg>
+                    {/* Bottom Outgoing Lines */}
+                    {[
+                      { d: "M 360 280 C 360 340, 200 340, 200 400" },
+                      { d: "M 400 280 C 400 340, 400 340, 400 400" },
+                      { d: "M 440 280 C 440 340, 600 340, 600 400" },
+                    ].map((line, i) => (
+                      <g key={`bot-${i}`}>
+                        <path d={line.d} fill="none" stroke="url(#line-grad)" strokeWidth="1.5" />
+                        <path d={line.d} fill="none" stroke="url(#flow-grad)" strokeWidth="3"
+                          strokeDasharray="40 200" className="arch-flow-anim" />
+                      </g>
+                    ))}
+                  </svg>
 
-                {/* Top Nodes: Sources */}
-                <div className="arch-tier arch-tier-top">
-                  {["NVD", "OSV.dev", "EPSS", "CISA KEV"].map(src => (
-                    <div className="venture-arch-node" key={src}>
-                      <span className="venture-arch-eyebrow">SOURCE</span>
-                      {src}
-                    </div>
-                  ))}
-                </div>
+                  {/* Top Nodes: Sources */}
+                  <div className="arch-tier arch-tier-top">
+                    {["NVD", "OSV.dev", "EPSS", "CISA KEV"].map(src => (
+                      <div className="venture-arch-node" key={src}>
+                        <span className="venture-arch-eyebrow">SOURCE</span>
+                        {src}
+                      </div>
+                    ))}
+                  </div>
 
-                {/* Center Node: Engine */}
-                <div className="arch-tier arch-tier-center">
-                  <div className="venture-arch-engine">
-                    <div className="engine-ring engine-ring-outer" />
-                    <div className="engine-ring engine-ring-inner" />
-                    <div className="engine-core">
-                      <span className="venture-arch-eyebrow" style={{ color: "var(--green)" }}>INGEST-RS</span>
-                      <span className="engine-text">OSVAULT ENGINE</span>
+                  {/* Center Node: Engine */}
+                  <div className="arch-tier arch-tier-center">
+                    <div className="venture-arch-engine">
+                      <div className="engine-ring engine-ring-outer" />
+                      <div className="engine-ring engine-ring-inner" />
+                      <div className="engine-core">
+                        <span className="venture-arch-eyebrow" style={{ color: "var(--green)" }}>INGEST-RS</span>
+                        <span className="engine-text">OSVAULT ENGINE</span>
+                      </div>
                     </div>
                   </div>
-                </div>
 
-                {/* Bottom Nodes: Outputs */}
-                <div className="arch-tier arch-tier-bottom">
-                  {["RISK SCORE", "CVE DATABASE", "PR CHECKS"].map(out => (
-                    <div className="venture-arch-node" key={out}>
-                      <span className="venture-arch-eyebrow">OUTPUT</span>
-                      {out}
-                    </div>
-                  ))}
+                  {/* Bottom Nodes: Outputs */}
+                  <div className="arch-tier arch-tier-bottom">
+                    {["RISK SCORE", "CVE DATABASE", "PR CHECKS"].map(out => (
+                      <div className="venture-arch-node" key={out}>
+                        <span className="venture-arch-eyebrow">OUTPUT</span>
+                        {out}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </Reveal>
+
+          {/* ===== MOBILE-NATIVE TIMELINE ===== */}
+          <Reveal delay={200}>
+            <div className="mobile-arch-timeline">
+              <div className="timeline-step">
+                <div className="timeline-icon">1</div>
+                <div className="timeline-content">
+                  <h4>Data Sources</h4>
+                  <p>Aggregate critical intelligence from dozens of fragmented origins.</p>
+                  <div className="timeline-badges">
+                    <span>NVD</span>
+                    <span>OSV.dev</span>
+                    <span>EPSS</span>
+                    <span>CISA KEV</span>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="timeline-step active">
+                <div className="timeline-icon pulse-green">2</div>
+                <div className="timeline-content">
+                  <h4 className="green-text">OsVault Engine (Ingest-RS)</h4>
+                  <p>Unify, normalize, and violently accelerate threat-score mapping in real-time.</p>
+                </div>
+              </div>
+              
+              <div className="timeline-step">
+                <div className="timeline-icon">3</div>
+                <div className="timeline-content">
+                  <h4>Output Ecology</h4>
+                  <p>Deliver deterministic intelligence directly into your workflow.</p>
+                  <div className="timeline-badges">
+                    <span>Risk Score</span>
+                    <span>CVE DB</span>
+                    <span>PR Checks</span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -1058,14 +1136,26 @@ export default function LandingClient({ stats, recent }: Props) {
           <Reveal><h2 className="section-headline">Start scanning today.</h2></Reveal>
           <Reveal>
             <p className="section-subtext" style={{ margin: "0 auto", textAlign: "center" }}>
-              Paste your package.json or requirements.txt and get a full security report — completely free.
+              Install the GitHub App to automatically scan every PR, or paste your dependency file for an instant report — completely free.
             </p>
           </Reveal>
           <Reveal>
-            <div className="waitlist-form">
-              <a href="/checker" className="waitlist-submit" id="cta-scan-btn"
-                style={{ display: "block", textAlign: "center", textDecoration: "none" }}>
-                SCAN DEPENDENCIES →
+            <div className="waitlist-form" style={{ display: "flex", gap: 14, justifyContent: "center", flexWrap: "wrap" }}>
+              <a
+                href="https://github.com/apps/osvault-security"
+                className="waitlist-submit"
+                id="cta-install-btn"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ display: "inline-block", textAlign: "center", textDecoration: "none" }}
+              >
+                INSTALL GITHUB APP →
+              </a>
+              <a href="/checker" className="btn-outline"
+                id="cta-scan-btn"
+                style={{ padding: "14px 28px", fontSize: 14, color: "var(--white-pure)", borderColor: "rgba(255,255,255,0.15)" }}
+              >
+                SCAN DEPENDENCIES
               </a>
             </div>
           </Reveal>

@@ -1,45 +1,78 @@
 # OsVault GitHub App
 
-Posts a native GitHub Check on every PR that touches `package.json` or `requirements.txt`.
-Fails the check if CRITICAL or CISA KEV vulnerabilities are detected.
+A GitHub App that automatically checks pull requests for vulnerable dependencies and performs reachability analysis to determine if vulnerabilities are actually exploitable in your code.
 
-## Setup
+## Features
 
-### 1. Create the GitHub App
+- 🔍 **Automatic Vulnerability Scanning**: Scans `package.json` and `requirements.txt` changes in PRs
+- 🎯 **Reachability Analysis**: Determines if vulnerable packages are actually imported/used in your code
+- ✅ **GitHub Check Runs**: Posts detailed results directly on pull requests
+- 🚀 **Smart Detection**: Only flags vulnerabilities that are REACHABLE, reducing false positives
 
-Go to https://github.com/settings/apps/new and set:
+## How It Works
 
-- **Webhook URL**: `https://your-service.railway.app/webhook`
-- **Webhook secret**: any random string (set as `GITHUB_WEBHOOK_SECRET`)
-- **Permissions**:
-  - Pull requests: Read
-  - Checks: Read & Write
-  - Contents: Read
-- **Subscribe to events**: Pull request
+1. When a PR modifies dependency files, the app is triggered
+2. Extracts added/modified dependencies from the diff
+3. Checks Supabase database for known vulnerabilities
+4. Analyzes the repository code to detect if vulnerable packages are imported
+5. Posts a check run with detailed results:
+   - **REACHABLE**: Package is imported and vulnerability is exploitable
+   - **BYPASSED**: Package exists but is not imported (safe to ignore)
 
-Download the private key and note the App ID.
+## Deployment
 
-### 2. Run the DB migration
+Deployed on Vercel: `https://github-app-psi-plum.vercel.app`
 
-In Supabase SQL editor, run the `github_usage` table block from `schema.sql`.
+### Environment Variables
 
-### 3. Deploy to Railway / Render
+Required in Vercel:
+- `GITHUB_APP_ID`: GitHub App ID
+- `GITHUB_APP_PRIVATE_KEY`: Private key (single line with `\n` escape sequences)
+- `GITHUB_WEBHOOK_SECRET`: Webhook secret for signature verification
+- `SUPABASE_URL`: Supabase project URL
+- `SUPABASE_KEY`: Supabase service role key
+- `APP_URL`: Base URL of the main application
+
+## Local Development
 
 ```bash
-cd github-app
+# Install dependencies
 npm install
+
+# Build TypeScript
 npm run build
+
+# Start the server
 npm start
 ```
 
-Set env vars from `.env.example`.
+## Project Structure
 
-### 4. Install the App
+```
+github-app/
+├── src/
+│   ├── index.ts          # Main webhook handler
+│   ├── checks.ts         # GitHub check run posting
+│   ├── diff.ts           # Dependency diff parsing
+│   ├── reachability.ts   # Code analysis for imports
+│   ├── supabase.ts       # Vulnerability database queries
+│   └── usage.ts          # Usage tracking for private repos
+├── dist/                 # Compiled JavaScript
+├── package.json
+├── tsconfig.json
+└── vercel.json          # Vercel deployment config
+```
 
-From your GitHub App page → Install App → select repos.
+## Supported Ecosystems
 
-## Monetization
+- **npm** (JavaScript/TypeScript): `package.json`
+- **PyPI** (Python): `requirements.txt`
 
-- Public repos: unlimited checks
-- Private repos: 10 free checks/month, then a paywall link appears in the PR
-- Upgrade page: `/upgrade` on your web app (not yet built — wire up Stripe there)
+## GitHub App Configuration
+
+- **Webhook URL**: `https://github-app-psi-plum.vercel.app/webhook`
+- **Events**: `pull_request` (opened, synchronize)
+- **Permissions**: 
+  - Contents: Read
+  - Pull requests: Read & Write
+  - Checks: Read & Write
