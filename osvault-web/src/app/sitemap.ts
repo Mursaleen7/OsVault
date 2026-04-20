@@ -3,7 +3,8 @@ import { MetadataRoute } from "next";
 
 const BASE_URL = "https://os-vault-kappa.vercel.app";
 
-export const revalidate = 3600; // regenerate every hour
+export const dynamic = 'force-dynamic'; // always fetch fresh data
+export const revalidate = 0;
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Static routes
