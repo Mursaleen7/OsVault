@@ -21,9 +21,9 @@ import { google } from 'googleapis';
 config({ path: '.env.local' });
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
-const SUPABASE_KEY = process.env.SUPABASE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'https://os-vault-kappa.vercel.app';
-const API_URL = process.env.INDEXING_API_URL || 'http://localhost:3000';
+const DAILY_QUOTA = 200;
 
 if (!SUPABASE_URL || !SUPABASE_KEY) {
   console.error('❌ Missing Supabase credentials');
@@ -107,6 +107,7 @@ async function getCVEsToIndex(limit: number): Promise<CVERecord[]> {
   const { data, error } = await supabase
     .from('vulnerabilities')
     .select('id, cve_id, published_at, modified_at, google_index_status, google_indexed_at, google_index_attempts')
+    .not('cve_id', 'is', null)
     .or('google_index_status.is.null,google_index_status.eq.pending,google_index_status.eq.failed')
     .order('published_at', { ascending: false })
     .limit(limit * 2); // Get more to filter
@@ -174,30 +175,67 @@ async function updateIndexingStatus(
   }
 }
 
-// Index URLs using the API
-async function indexUrls(urls: string[]): Promise<{ indexed: number; failed: number; errors: any[] }> {
+// Index URLs directly via Google Indexing API (no intermediate API needed)
+async function indexUrls(urls: string[], serviceAccounts: any[]): Promise<{ indexed: number; failed: number; errors: any[] }> {
   if (urls.length === 0) {
     return { indexed: 0, failed: 0, errors: [] };
   }
 
-  const response = await fetch(`${API_URL}/api/indexing`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ urls }),
-  });
+  let indexed = 0;
+  const errors: any[] = [];
+  let accountIndex = 0;
+  let accountUsage = 0;
 
-  if (!response.ok) {
-    throw new Error(`Indexing API failed: ${response.statusText}`);
+  for (const url of urls) {
+    // Rotate accounts when one hits quota
+    if (accountUsage >= DAILY_QUOTA) {
+      accountIndex++;
+      accountUsage = 0;
+    }
+
+    if (accountIndex >= serviceAccounts.length) {
+      errors.push({ url, error: 'All service accounts have reached their daily quota' });
+      continue;
+    }
+
+    const credentials = serviceAccounts[accountIndex];
+
+    try {
+      const auth = new google.auth.GoogleAuth({
+        credentials,
+        scopes: ['https://www.googleapis.com/auth/indexing'],
+      });
+      const indexing = google.indexing({ version: 'v3', auth });
+
+      await indexing.urlNotifications.publish({
+        requestBody: { url, type: 'URL_UPDATED' },
+      });
+
+      indexed++;
+      accountUsage++;
+    } catch (error: any) {
+      if (error.message?.includes('Quota exceeded')) {
+        // This account is exhausted, try next
+        accountIndex++;
+        accountUsage = 0;
+        errors.push({ url, error: 'Quota exceeded, rotated account' });
+      } else {
+        errors.push({ url, error: error.message });
+      }
+    }
+
+    // Small delay to avoid rate limiting
+    await new Promise(resolve => setTimeout(resolve, 50));
   }
 
-  return await response.json();
+  return { indexed, failed: errors.length, errors };
 }
 
-// Get available quota
-async function getAvailableQuota(): Promise<number> {
-  const response = await fetch(`${API_URL}/api/indexing`);
-  const status = await response.json();
-  return status.totalRemaining || 0;
+// Get available quota by checking service accounts
+async function getAvailableQuota(serviceAccounts: any[]): Promise<number> {
+  // Each account provides DAILY_QUOTA URLs
+  // We can't check exact usage without tracking, so return total capacity
+  return serviceAccounts.length * DAILY_QUOTA;
 }
 
 async function main() {
@@ -207,9 +245,15 @@ async function main() {
   console.log(`\n⏰ Started at: ${new Date().toISOString()}`);
 
   try {
+    // Load service accounts first
+    const serviceAccounts = loadServiceAccounts();
+    if (serviceAccounts.length === 0) {
+      throw new Error('No service accounts configured');
+    }
+
     // Check available quota
-    const availableQuota = await getAvailableQuota();
-    console.log(`\n📊 Available quota today: ${availableQuota} URLs`);
+    const availableQuota = await getAvailableQuota(serviceAccounts);
+    console.log(`\n📊 Available quota today: ${availableQuota} URLs (${serviceAccounts.length} account(s) × ${DAILY_QUOTA})`);
 
     if (availableQuota === 0) {
       console.log('\n⚠️  No quota available today. All service accounts exhausted.');
@@ -228,12 +272,6 @@ async function main() {
     console.log(`\n📝 Found ${cvesToIndex.length} CVEs to index`);
     console.log(`   - New (never attempted): ${cvesToIndex.filter(c => (c.google_index_attempts || 0) === 0).length}`);
     console.log(`   - Retries: ${cvesToIndex.filter(c => (c.google_index_attempts || 0) > 0).length}`);
-
-    // Load service accounts for status checking
-    const serviceAccounts = loadServiceAccounts();
-    if (serviceAccounts.length === 0) {
-      throw new Error('No service accounts configured');
-    }
 
     // Check which ones are already indexed in Google
     console.log('\n🔍 Checking Google indexing status...');
@@ -277,7 +315,7 @@ async function main() {
     console.log(`\n📤 Submitting ${toSubmit.length} URLs to Google...`);
     const urls = toSubmit.map(cve => `${BASE_URL}/cve/${cve.cve_id}`);
     
-    const result = await indexUrls(urls);
+    const result = await indexUrls(urls, serviceAccounts);
 
     console.log('\n═══════════════════════════════════════════════════════════════════════════');
     console.log('  INDEXING RESULTS');
@@ -291,20 +329,20 @@ async function main() {
     // Update database with results
     console.log('\n💾 Updating database...');
     
-    // Update successfully indexed CVEs
-    for (const url of urls) {
-      const cveId = url.split('/').pop();
-      if (cveId) {
-        // Check if this URL was in the errors list
-        const hasError = result.errors.some((err: any) => 
-          (typeof err === 'object' && err.url === url) || 
-          (typeof err === 'string' && err.includes(url))
-        );
-        if (!hasError) {
-          await updateIndexingStatus(cveId, 'indexed');
-        } else {
-          await updateIndexingStatus(cveId, 'failed');
-        }
+    // Update successfully indexed CVEs using toSubmit array (has correct cve_id)
+    for (const cve of toSubmit) {
+      if (!cve.cve_id) continue; // skip null CVE IDs
+      
+      const url = `${BASE_URL}/cve/${cve.cve_id}`;
+      const hasError = result.errors.some((err: any) => 
+        (typeof err === 'object' && err.url === url) || 
+        (typeof err === 'string' && err.includes(url))
+      );
+      
+      if (!hasError) {
+        await updateIndexingStatus(cve.cve_id, 'indexed');
+      } else {
+        await updateIndexingStatus(cve.cve_id, 'failed');
       }
     }
 
@@ -320,8 +358,8 @@ async function main() {
     }
 
     // Check remaining quota
-    const remainingQuota = await getAvailableQuota();
-    console.log(`\n📊 Remaining quota: ${remainingQuota}/${availableQuota + result.indexed}`);
+    const remainingQuota = await getAvailableQuota(serviceAccounts);
+    console.log(`\n📊 Remaining quota: ${remainingQuota} (estimated)`);
 
     console.log('\n✅ Smart daily indexing complete!');
     console.log(`⏰ Finished at: ${new Date().toISOString()}`);
