@@ -12,11 +12,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${BASE_URL}/checker`, lastModified: new Date(), changeFrequency: "weekly", priority: 0.9 },
   ];
 
-  // CVE pages from NVD
+  // All CVE pages (both NVD and OSV sources)
   const { data: nvd } = await supabase
     .from("vulnerabilities")
     .select("cve_id, modified_at")
-    .eq("source", "nvd")
     .not("cve_id", "is", null)
     .limit(49000);
 
